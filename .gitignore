@@ -1,0 +1,27 @@
+# --- PocketBase & Backend ---
+# 核心数据库文件夹（包含你的数据和设置），绝对不能上传
+backend/pb_data/
+# 如果你使用了本地备份
+backend/pb_backups/
+# Go 二进制编译产物
+backend/hemono
+*.exe
+*.bin
+
+# --- Frontend (Bun & SvelteKit) ---
+# 依赖库
+node_modules/
+# SvelteKit 生成的临时文件
+frontend/.svelte-kit/
+# 构建输出目录
+frontend/build/
+frontend/dist/
+
+# .env 文件（包含敏感 API Key）
+.env
+*.env.local
+
+# --- OS & IDE ---
+.DS_Store
+.vscode/
+.idea/
