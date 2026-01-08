@@ -2,23 +2,29 @@
 	import '../app.css';
 	import { pb, currentUser } from '$lib/pb';
 	import { onMount } from 'svelte';
+	import Toast from '$lib/components/Toast.svelte';
+	import { toasts } from '$lib/toast';
 
 	// 退出登录
 	function logout() {
 		pb.authStore.clear();
+		toasts.success('已退出登录');
 	}
 
 	// 登录逻辑
 	async function loginWithGitHub() {
 		try {
 			await pb.collection('users').authWithOAuth2({ provider: 'github' });
-		} catch (err) {
+			toasts.success('登录成功');
+		} catch (err: any) {
 			console.error('Login failed:', err);
+			toasts.error(`登录失败: ${err.message || '未知错误'}`);
 		}
 	}
 </script>
 
 <div class="bg-base-200 min-h-screen">
+	<Toast />
 	<div class="navbar bg-base-100 top-0 shadow-sm sticky z-50">
 		<div class="flex-1">
 			<span class="text-primary px-4 text-xl font-black tracking-tighter">荷物账本</span>
@@ -26,12 +32,10 @@
 		<div class="px-2 flex-none select-none">
 			{#if $currentUser}
 				<div class="dropdown dropdown-end">
-					<div
-						tabindex="0"
-						role="button"
-						class="avatar"
-					>
-						<div class="cursor-pointer hover:bg-primary hover:ring-2 ring-primary w-10 h-10 border-primary border-2 rounded-full">
+					<div tabindex="0" role="button" class="avatar">
+						<div
+							class="hover:bg-primary ring-primary w-10 h-10 border-primary cursor-pointer rounded-full border-2 hover:ring-2"
+						>
 							<img
 								src={$currentUser.avatar
 									? pb.files.getURL($currentUser, $currentUser.avatar)
@@ -42,9 +46,11 @@
 					</div>
 					<ul
 						tabindex="-1"
-						class="menu menu-xs w-48 bg-base-100 dropdown-content border border-base rounded-box mt-3 p-2 shadow z-1"
+						class="menu menu-xs w-48 bg-base-100 dropdown-content border-base rounded-box mt-3 p-2 shadow z-1 border"
 					>
-						<li class="menu-title border-b mb-2"><span class="tooltip" data-tip="{$currentUser.email}">{$currentUser.name}</span></li>
+						<li class="menu-title mb-2 border-b">
+							<span class="tooltip" data-tip={$currentUser.email}>{$currentUser.name}</span>
+						</li>
 						<li><button on:click={logout} class="text-error">退出登录</button></li>
 					</ul>
 				</div>
