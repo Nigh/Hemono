@@ -48,7 +48,7 @@
 			ledger: selectedLedger,
 			payer: $currentUser.id,
 			amount: parseFloat(amount),
-			split_type: splitType,
+			type: splitType,
 			beneficiary: splitType === 'SINGLE' ? beneficiary : null,
 			note,
 			date: new Date()
