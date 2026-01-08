@@ -48,7 +48,7 @@
 			ledger: selectedLedger,
 			payer: $currentUser.id,
 			amount: parseFloat(amount),
-			split_type: splitType,
+			type: splitType,
 			beneficiary: splitType === 'SINGLE' ? beneficiary : null,
 			note,
 			date: new Date()
@@ -159,7 +159,7 @@
 			{#if splitType === 'SINGLE'}
 				<div class="bg-base-200 border-primary/10 rounded-xl border p-3">
 					<label class="label pt-0"
-						><span class="label-text-alt font-bold">由谁支付/承担？</span></label
+						><span class="label-text-alt font-bold">由谁承担？</span></label
 					>
 					<select class="select select-sm select-ghost w-full" bind:value={beneficiary}>
 						{#each members as m}
@@ -174,12 +174,12 @@
 			<input
 				type="text"
 				bind:value={note}
-				placeholder="写点什么备注..."
+				placeholder="写点备注..."
 				class="input input-bordered w-full"
 			/>
 		</div>
 		<div class="modal-action">
-			<button class="btn btn-primary btn-block shadow-lg" on:click={addTransaction}>保存账单</button
+			<button class="btn btn-primary btn-block shadow-lg" on:click={addTransaction}>记一笔</button
 			>
 		</div>
 	</div>
