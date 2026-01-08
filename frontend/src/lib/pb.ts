@@ -8,6 +8,6 @@ export const currentUser = writable(pb.authStore.model);
 
 // 监听 auth 状态变化（登录、退出、Token 过期）
 pb.authStore.onChange((token, model) => {
-    console.log('Auth state changed:', model);
-    currentUser.set(model);
+	console.log('Auth state changed:', model);
+	currentUser.set(model);
 }, true); // true 表示立即触发一次当前状态

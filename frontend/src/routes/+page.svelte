@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { pb, currentUser } from '$lib/pb';
 	import { onMount } from 'svelte';
+	import { toasts } from '$lib/toast';
 
 	let ledgers: any[] = [];
 	let members: any[] = [];
@@ -19,7 +20,12 @@
 	});
 
 	async function loadLedgers() {
-		ledgers = await pb.collection('ledgers').getFullList({ sort: '-created' });
+		try {
+			ledgers = await pb.collection('ledgers').getFullList({ sort: '-created' });
+		} catch (err: any) {
+			console.error('Failed to load ledgers:', err);
+			toasts.error(`加载账本失败: ${err.message || '未知错误'}`);
+		}
 	}
 
 	// 监听账本选择，更新成员列表
@@ -36,6 +42,10 @@
 			.then((res) => {
 				members = res.map((m) => m.expand.user);
 				if (!beneficiary && $currentUser) beneficiary = $currentUser.id;
+			})
+			.catch((err) => {
+				console.error('Failed to load members:', err);
+				toasts.error(`加载成员失败: ${err.message || '未知错误'}`);
 			});
 	}
 
@@ -49,31 +59,49 @@
 	}
 
 	async function createLedger() {
-		if (!newLedgerName) return;
-		await pb.collection('ledgers').create({ name: newLedgerName, owner: $currentUser.id });
-		newLedgerName = '';
-		loadLedgers();
-		window.create_ledger_modal.close();
+		if (!newLedgerName) {
+			toasts.warning('请输入账本名称');
+			return;
+		}
+		try {
+			await pb.collection('ledgers').create({ name: newLedgerName, owner: $currentUser.id });
+			newLedgerName = '';
+			loadLedgers();
+			(window as any).create_ledger_modal.close();
+			toasts.success('账本创建成功');
+		} catch (err: any) {
+			console.error('Failed to create ledger:', err);
+			toasts.error(`创建账本失败: ${err.message || '未知错误'}`);
+		}
 	}
 
 	async function addTransaction() {
-		if (!expandedLedger || !amount) return;
-		amount = parseFloat(amount).toFixed(2);
-		await pb.collection('transactions').create({
-			ledger: expandedLedger,
-			payer: $currentUser.id,
-			amount: Math.round(Number(amount) * 100),
-			type: splitType,
-			beneficiary: splitType === 'SINGLE' ? beneficiary : null,
-			note,
-			date: new Date()
-		});
-		// 重置
-		amount = '';
-		note = '';
-		expandedLedger = '';
-		activeLedgerName = '';
-		window.add_modal.close();
+		if (!expandedLedger || !amount) {
+			toasts.warning('请输入金额');
+			return;
+		}
+		try {
+			amount = parseFloat(amount).toFixed(2);
+			await pb.collection('transactions').create({
+				ledger: expandedLedger,
+				payer: $currentUser.id,
+				amount: Math.round(Number(amount) * 100),
+				type: splitType,
+				beneficiary: splitType === 'SINGLE' ? beneficiary : null,
+				note,
+				date: new Date()
+			});
+			// 重置
+			amount = '';
+			note = '';
+			expandedLedger = '';
+			activeLedgerName = '';
+			(window as any).add_modal.close();
+			toasts.success('记账成功');
+		} catch (err: any) {
+			console.error('Failed to add transaction:', err);
+			toasts.error(`记账失败: ${err.message || '未知错误'}`);
+		}
 	}
 </script>
 
@@ -81,9 +109,8 @@
 	<div class="gap-3 grid">
 		{#each ledgers as ledger}
 			<div
-				class="card select-none transition-all duration-300 border {expandedLedger ===
-				ledger.id
-					? 'border-primary ring-2 ring-primary'
+				class="card border transition-all duration-300 select-none {expandedLedger === ledger.id
+					? 'border-primary ring-primary ring-2'
 					: 'border-base hover:ring-2'}"
 			>
 				<!-- 账本头部 -->
@@ -122,7 +149,7 @@
 							<span class="text-sm opacity-60">快速记账</span>
 							<button
 								class="btn btn-primary btn-sm shadow-lg"
-								on:click={() => window.add_modal.showModal()}
+								on:click={() => (window as any).add_modal.showModal()}
 							>
 								<svg
 									xmlns="http://www.w3.org/2000/svg"
@@ -191,7 +218,7 @@
 		{/each}
 		<button
 			class="btn btn-sm btn-ghost"
-			on:click={() => window.create_ledger_modal.showModal()}
+			on:click={() => (window as any).create_ledger_modal.showModal()}
 			title="新建账本"
 		>
 			<svg
@@ -235,12 +262,12 @@
 			为「{activeLedgerName}」记一笔
 		</h3>
 		<div class="space-y-4">
-				<input
-					type="number"
-					bind:value={amount}
-					placeholder="金额"
-					class="input input-bordered w-full"
-				/>
+			<input
+				type="number"
+				bind:value={amount}
+				placeholder="金额"
+				class="input input-bordered w-full"
+			/>
 
 			<div class="tabs tabs-boxed bg-base-200">
 				<button
