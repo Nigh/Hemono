@@ -23,7 +23,7 @@
 		<div class="flex-1">
 			<span class="text-primary px-4 text-xl font-black tracking-tighter">荷物账本</span>
 		</div>
-		<div class="px-2 flex-none">
+		<div class="px-2 flex-none select-none">
 			{#if $currentUser}
 				<div class="dropdown dropdown-end">
 					<div
@@ -42,9 +42,9 @@
 					</div>
 					<ul
 						tabindex="-1"
-						class="menu menu-xs dropdown-content border border-base rounded-box mt-3 p-2 shadow z-1"
+						class="menu menu-xs w-48 bg-base-100 dropdown-content border border-base rounded-box mt-3 p-2 shadow z-1"
 					>
-						<li class="menu-title"><span>{$currentUser.username || $currentUser.email}</span></li>
+						<li class="menu-title border-b mb-2"><span class="tooltip" data-tip="{$currentUser.email}">{$currentUser.name}</span></li>
 						<li><button on:click={logout} class="text-error">退出登录</button></li>
 					</ul>
 				</div>

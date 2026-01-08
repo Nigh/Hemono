@@ -81,10 +81,10 @@
 	<div class="gap-3 grid">
 		{#each ledgers as ledger}
 			<div
-				class="card transition-all duration-300 {expandedLedger ===
+				class="card select-none transition-all duration-300 border {expandedLedger ===
 				ledger.id
-					? 'border-primary border-4'
-					: 'border-base border hover:ring-2'}"
+					? 'border-primary ring-2 ring-primary'
+					: 'border-base hover:ring-2'}"
 			>
 				<!-- 账本头部 -->
 				<button
@@ -230,7 +230,7 @@
 </dialog>
 
 <dialog id="add_modal" class="modal modal-bottom sm:modal-middle">
-	<div class="modal-box">
+	<div class="modal-box border">
 		<h3 class="mb-6 text-lg font-bold">
 			为「{activeLedgerName}」记一笔
 		</h3>
@@ -259,7 +259,7 @@
 					<select class="select select-sm select-ghost w-full" bind:value={beneficiary}>
 						{#each members as m}
 							<option value={m.id}
-								>{m.username || m.email} {m.id === $currentUser.id ? '(自己)' : ''}</option
+								>{m.name || m.email} {m.id === $currentUser.id ? '(自己)' : ''}</option
 							>
 						{/each}
 					</select>
