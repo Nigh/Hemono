@@ -18,20 +18,20 @@
 	}
 </script>
 
-<div class="bg-base-200 min-h-screen pb-20">
-	<div class="navbar bg-base-100 sticky top-0 z-50 shadow-sm">
+<div class="bg-base-200 min-h-screen">
+	<div class="navbar bg-base-100 top-0 shadow-sm sticky z-50">
 		<div class="flex-1">
 			<span class="text-primary px-4 text-xl font-black tracking-tighter">荷物账本</span>
 		</div>
-		<div class="flex-none px-2">
+		<div class="px-2 flex-none">
 			{#if $currentUser}
 				<div class="dropdown dropdown-end">
 					<div
 						tabindex="0"
 						role="button"
-						class="btn btn-ghost btn-circle avatar border-primary/20 border"
+						class="avatar"
 					>
-						<div class="w-10 rounded-full">
+						<div class="cursor-pointer hover:bg-primary hover:ring-2 ring-primary w-10 h-10 border-primary border-2 rounded-full">
 							<img
 								src={$currentUser.avatar
 									? pb.files.getURL($currentUser, $currentUser.avatar)
@@ -42,8 +42,9 @@
 					</div>
 					<ul
 						tabindex="-1"
-						class="menu menu-sm dropdown-content bg-base-100 rounded-box z-1 mt-3 w-52 p-2 shadow"
+						class="menu menu-xs dropdown-content border border-base rounded-box mt-3 p-2 shadow z-1"
 					>
+						<li class="menu-title"><span>{$currentUser.username || $currentUser.email}</span></li>
 						<li><button on:click={logout} class="text-error">退出登录</button></li>
 					</ul>
 				</div>
@@ -53,7 +54,7 @@
 		</div>
 	</div>
 
-	<main class="mx-auto max-w-md p-4">
+	<main class="max-w-md p-4 mx-auto">
 		{#if $currentUser}
 			<slot />
 		{:else}
@@ -66,54 +67,4 @@
 			</div>
 		{/if}
 	</main>
-
-	{#if $currentUser}
-		<div class="dock border-base-300 z-50 border-t">
-			<button class="active">
-				<svg
-					xmlns="http://www.w3.org/2000/svg"
-					class="h-5 w-5"
-					fill="none"
-					viewBox="0 0 24 24"
-					stroke="currentColor"
-					><path
-						d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
-					/></svg
-				>
-				<span class="btm-nav-label text-xs">首页</span>
-			</button>
-			<button on:click={() => window.add_modal.showModal()} title="添加账单">
-				<div
-					class="bg-primary text-primary-content border-base-200 -mt-10 rounded-full border-4 p-3 shadow-xl"
-				>
-					<svg
-						xmlns="http://www.w3.org/2000/svg"
-						class="h-6 w-6"
-						fill="none"
-						viewBox="0 0 24 24"
-						stroke="currentColor"
-						><path
-							stroke-linecap="round"
-							stroke-linejoin="round"
-							stroke-width="3"
-							d="M12 4v16m8-8H4"
-						/></svg
-					>
-				</div>
-			</button>
-			<button>
-				<svg
-					xmlns="http://www.w3.org/2000/svg"
-					class="h-5 w-5"
-					fill="none"
-					viewBox="0 0 24 24"
-					stroke="currentColor"
-					><path
-						d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-					/></svg
-				>
-				<span class="btm-nav-label text-xs">报表</span>
-			</button>
-		</div>
-	{/if}
 </div>
