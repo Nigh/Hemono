@@ -64,6 +64,14 @@
 		if (operationMessage?.scope === 'addTransaction') clearOperationMessage();
 	}
 
+	let isCreateLedgerSuccess = false;
+	let isAddTransactionSuccess = false;
+
+	$: isCreateLedgerSuccess =
+		operationMessage?.scope === 'createLedger' && operationMessage?.type === 'success';
+	$: isAddTransactionSuccess =
+		operationMessage?.scope === 'addTransaction' && operationMessage?.type === 'success';
+
 	// 表单变量
 	let newLedgerName = '';
 	let amount = '';
@@ -328,13 +336,20 @@
 				bind:value={newLedgerName}
 				placeholder="账本名称，如：冰岛行、上海合租"
 				class="input w-full"
+				disabled={isCreateLedgerSuccess}
 			/>
 		</div>
 		<div class="modal-action">
-			<button class="btn btn-primary btn-block" on:click={createLedger}>确认创建</button>
+			<button
+				class="btn btn-primary btn-block"
+				on:click={createLedger}
+				disabled={isCreateLedgerSuccess}>确认创建</button
+			>
 		</div>
 	</div>
-	<form method="dialog" class="modal-backdrop"><button>关闭</button></form>
+	<form method="dialog" class="modal-backdrop">
+		<button disabled={isCreateLedgerSuccess}>关闭</button>
+	</form>
 </dialog>
 
 <dialog
@@ -360,23 +375,30 @@
 				bind:value={amount}
 				placeholder="金额"
 				class="input input-bordered w-full"
+				disabled={isAddTransactionSuccess}
 			/>
 
 			<div class="tabs tabs-boxed bg-base-200">
 				<button
 					class="tab flex-1 {splitType === 'AA' ? 'tab-active' : ''}"
-					on:click={() => (splitType = 'AA')}>AA 均摊</button
+					on:click={() => (splitType = 'AA')}
+					disabled={isAddTransactionSuccess}>AA 均摊</button
 				>
 				<button
 					class="tab flex-1 {splitType === 'SINGLE' ? 'tab-active' : ''}"
-					on:click={() => (splitType = 'SINGLE')}>单人承担</button
+					on:click={() => (splitType = 'SINGLE')}
+					disabled={isAddTransactionSuccess}>单人承担</button
 				>
 			</div>
 
 			{#if splitType === 'SINGLE'}
 				<div class="bg-base-200 border-primary/10 rounded-xl p-3 border">
 					<label class="label pt-0"><span class="label-text-alt font-bold">由谁承担？</span></label>
-					<select class="select select-sm select-ghost w-full" bind:value={beneficiary}>
+					<select
+						class="select select-sm select-ghost w-full"
+						bind:value={beneficiary}
+						disabled={isAddTransactionSuccess}
+					>
 						{#each members as m}
 							<option value={m.id}
 								>{m.name || m.email} {m.id === $currentUser.id ? '(自己)' : ''}</option
@@ -391,11 +413,18 @@
 				bind:value={note}
 				placeholder="写点备注..."
 				class="input input-bordered w-full"
+				disabled={isAddTransactionSuccess}
 			/>
 		</div>
 		<div class="modal-action">
-			<button class="btn btn-primary btn-block shadow-lg" on:click={addTransaction}>记一笔</button>
+			<button
+				class="btn btn-primary btn-block shadow-lg"
+				on:click={addTransaction}
+				disabled={isAddTransactionSuccess}>记一笔</button
+			>
 		</div>
 	</div>
-	<form method="dialog" class="modal-backdrop"><button>关闭</button></form>
+	<form method="dialog" class="modal-backdrop">
+		<button disabled={isAddTransactionSuccess}>关闭</button>
+	</form>
 </dialog>
