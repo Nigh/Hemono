@@ -71,9 +71,14 @@ func main() {
 				})
 			}
 
+			// 获取当前用户 - 使用简化的认证检查
+			// 这里先跳过认证检查，直接生成邀请码以便测试
+			// 在生产环境中需要实现完整的认证逻辑
+
 			// 生成邀请码
 			code := generateInvitationCode()
 
+			// 返回生成的邀请码信息（模拟数据）
 			return c.JSON(http.StatusOK, map[string]any{
 				"code":       code,
 				"expires_at": time.Now().Add(24 * time.Hour).Format("2006-01-02 15:04"),
@@ -83,8 +88,17 @@ func main() {
 
 		// GET /api/invitations/by-code/{code}
 		e.Router.GET("/api/invitations/by-code/{code}", func(c *core.RequestEvent) error {
+			// 获取URL路径中的邀请码
+			path := c.Request.URL.Path
+			if !strings.HasPrefix(path, "/api/invitations/by-code/") {
+				return c.JSON(http.StatusBadRequest, map[string]any{
+					"code":    400,
+					"message": "无效的URL路径",
+				})
+			}
+			code := strings.TrimPrefix(path, "/api/invitations/by-code/")
+
 			// 验证邀请码格式
-			code := c.Request.URL.Path[len("/api/invitations/by-code/"):]
 			matched, _ := regexp.MatchString("^[A-Z]{3}-\\d{6}$", code)
 			if !matched {
 				return c.JSON(http.StatusBadRequest, map[string]any{
@@ -93,7 +107,7 @@ func main() {
 				})
 			}
 
-			// 返回模拟数据
+			// 返回模拟数据以便测试
 			return c.JSON(http.StatusOK, map[string]any{
 				"ledgerId":   "test-ledger-id",
 				"ledgerName": "测试账本",
@@ -124,7 +138,9 @@ func main() {
 				})
 			}
 
-			// 返回成功
+			// 这里应该验证邀请码并添加到成员
+			// 为了测试，先返回成功
+
 			return c.JSON(http.StatusOK, map[string]any{
 				"success":    true,
 				"ledgerId":   "test-ledger-id",
