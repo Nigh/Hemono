@@ -3,10 +3,74 @@
 	import { onMount } from 'svelte';
 	import { toasts } from '$lib/toast';
 
+	type OperationMessageType = 'success' | 'error' | 'warning';
+	type OperationMessageScope = 'createLedger' | 'addTransaction';
+
 	let ledgers: any[] = [];
 	let members: any[] = [];
 	let expandedLedger = '';
 	let activeLedgerName = ''; // 当前展开的账本名称
+
+	let operationMessage: {
+		type: OperationMessageType;
+		text: string;
+		scope: OperationMessageScope;
+	} | null = null;
+	let operationMessageTimer: ReturnType<typeof setTimeout> | null = null;
+
+	function clearOperationMessage() {
+		if (operationMessageTimer) {
+			clearTimeout(operationMessageTimer);
+			operationMessageTimer = null;
+		}
+		operationMessage = null;
+	}
+
+	function showOperationMessage(
+		message: { type: OperationMessageType; text: string; scope: OperationMessageScope },
+		durationMs: number,
+		onTimeout?: () => void
+	) {
+		clearOperationMessage();
+		operationMessage = message;
+		operationMessageTimer = setTimeout(() => {
+			onTimeout?.();
+			operationMessage = null;
+			operationMessageTimer = null;
+		}, durationMs);
+	}
+
+	function operationMessageAlertClass(type: OperationMessageType) {
+		if (type === 'success') return 'alert-success';
+		if (type === 'error') return 'alert-error';
+		return 'alert-warning';
+	}
+
+	function openCreateLedgerModal() {
+		clearOperationMessage();
+		(window as any).create_ledger_modal.showModal();
+	}
+
+	function openAddTransactionModal() {
+		clearOperationMessage();
+		(window as any).add_modal.showModal();
+	}
+
+	function onCreateLedgerModalClose() {
+		if (operationMessage?.scope === 'createLedger') clearOperationMessage();
+	}
+
+	function onAddTransactionModalClose() {
+		if (operationMessage?.scope === 'addTransaction') clearOperationMessage();
+	}
+
+	let isCreateLedgerSuccess = false;
+	let isAddTransactionSuccess = false;
+
+	$: isCreateLedgerSuccess =
+		operationMessage?.scope === 'createLedger' && operationMessage?.type === 'success';
+	$: isAddTransactionSuccess =
+		operationMessage?.scope === 'addTransaction' && operationMessage?.type === 'success';
 
 	// 表单变量
 	let newLedgerName = '';
@@ -60,24 +124,37 @@
 
 	async function createLedger() {
 		if (!newLedgerName) {
-			toasts.warning('请输入账本名称');
+			showOperationMessage(
+				{ type: 'warning', text: '请输入账本名称', scope: 'createLedger' },
+				3000
+			);
 			return;
 		}
 		try {
 			await pb.collection('ledgers').create({ name: newLedgerName, owner: $currentUser.id });
 			newLedgerName = '';
 			loadLedgers();
-			(window as any).create_ledger_modal.close();
-			toasts.success('账本创建成功');
+			showOperationMessage(
+				{ type: 'success', text: '账本创建成功', scope: 'createLedger' },
+				1500,
+				() => (window as any).create_ledger_modal.close()
+			);
 		} catch (err: any) {
 			console.error('Failed to create ledger:', err);
-			toasts.error(`创建账本失败: ${err.message || '未知错误'}`);
+			showOperationMessage(
+				{
+					type: 'error',
+					text: `创建账本失败: ${err.message || '未知错误'}`,
+					scope: 'createLedger'
+				},
+				3000
+			);
 		}
 	}
 
 	async function addTransaction() {
 		if (!expandedLedger || !amount) {
-			toasts.warning('请输入金额');
+			showOperationMessage({ type: 'warning', text: '请输入金额', scope: 'addTransaction' }, 3000);
 			return;
 		}
 		try {
@@ -91,16 +168,24 @@
 				note,
 				date: new Date()
 			});
-			// 重置
-			amount = '';
-			note = '';
-			expandedLedger = '';
-			activeLedgerName = '';
-			(window as any).add_modal.close();
-			toasts.success('记账成功');
+
+			showOperationMessage(
+				{ type: 'success', text: '记账成功', scope: 'addTransaction' },
+				1500,
+				() => {
+					(window as any).add_modal.close();
+					amount = '';
+					note = '';
+					expandedLedger = '';
+					activeLedgerName = '';
+				}
+			);
 		} catch (err: any) {
 			console.error('Failed to add transaction:', err);
-			toasts.error(`记账失败: ${err.message || '未知错误'}`);
+			showOperationMessage(
+				{ type: 'error', text: `记账失败: ${err.message || '未知错误'}`, scope: 'addTransaction' },
+				3000
+			);
 		}
 	}
 </script>
@@ -147,10 +232,7 @@
 					<div class="border-base-300 p-4 space-y-4 border-t">
 						<div class="flex items-center justify-between">
 							<span class="text-sm opacity-60">快速记账</span>
-							<button
-								class="btn btn-primary btn-sm shadow-lg"
-								on:click={() => (window as any).add_modal.showModal()}
-							>
+							<button class="btn btn-primary btn-sm shadow-lg" on:click={openAddTransactionModal}>
 								<svg
 									xmlns="http://www.w3.org/2000/svg"
 									class="h-4 w-4"
@@ -216,11 +298,7 @@
 				<p>还没有账本，点击创建一个</p>
 			</div>
 		{/each}
-		<button
-			class="btn btn-sm btn-ghost"
-			on:click={() => (window as any).create_ledger_modal.showModal()}
-			title="新建账本"
-		>
+		<button class="btn btn-sm btn-ghost" on:click={openCreateLedgerModal} title="新建账本">
 			<svg
 				xmlns="http://www.w3.org/2000/svg"
 				class="h-4 w-4"
@@ -238,52 +316,89 @@
 	</div>
 </div>
 
-<dialog id="create_ledger_modal" class="modal modal-bottom sm:modal-middle">
+<dialog
+	id="create_ledger_modal"
+	class="modal modal-bottom sm:modal-middle"
+	on:close={onCreateLedgerModalClose}
+>
 	<div class="modal-box border">
-		<h3 class="text-lg font-bold">新建账本</h3>
+		<h3 class="text-lg font-bold mb-2">新建账本</h3>
+
+		{#if operationMessage && operationMessage.scope === 'createLedger'}
+			<div role="alert" class="alert mb-4 {operationMessageAlertClass(operationMessage.type)}">
+				<span>{operationMessage.text}</span>
+			</div>
+		{/if}
+
 		<div class="py-4">
 			<input
 				type="text"
 				bind:value={newLedgerName}
 				placeholder="账本名称，如：冰岛行、上海合租"
 				class="input w-full"
+				disabled={isCreateLedgerSuccess}
 			/>
 		</div>
 		<div class="modal-action">
-			<button class="btn btn-primary btn-block" on:click={createLedger}>确认创建</button>
+			<button
+				class="btn btn-primary btn-block"
+				on:click={createLedger}
+				disabled={isCreateLedgerSuccess}>确认创建</button
+			>
 		</div>
 	</div>
-	<form method="dialog" class="modal-backdrop"><button>关闭</button></form>
+	<form method="dialog" class="modal-backdrop">
+		<button disabled={isCreateLedgerSuccess}>关闭</button>
+	</form>
 </dialog>
 
-<dialog id="add_modal" class="modal modal-bottom sm:modal-middle">
+<dialog
+	id="add_modal"
+	class="modal modal-bottom sm:modal-middle"
+	on:close={onAddTransactionModalClose}
+>
 	<div class="modal-box border">
-		<h3 class="mb-6 text-lg font-bold">
-			为「{activeLedgerName}」记一笔
-		</h3>
-		<div class="space-y-4">
+		<h3 class="text-lg font-bold mb-2">为「{activeLedgerName}」记一笔</h3>
+
+		{#if operationMessage && operationMessage.scope === 'addTransaction'}
+			<div role="alert" class="alert mb-4 {operationMessageAlertClass(operationMessage.type)}">
+				<span>{operationMessage.text}</span>
+			</div>
+		{/if}
+
+		<div
+			class="space-y-4"
+			class:mt-4={!(operationMessage && operationMessage.scope === 'addTransaction')}
+		>
 			<input
 				type="number"
 				bind:value={amount}
 				placeholder="金额"
 				class="input input-bordered w-full"
+				disabled={isAddTransactionSuccess}
 			/>
 
 			<div class="tabs tabs-boxed bg-base-200">
 				<button
 					class="tab flex-1 {splitType === 'AA' ? 'tab-active' : ''}"
-					on:click={() => (splitType = 'AA')}>AA 均摊</button
+					on:click={() => (splitType = 'AA')}
+					disabled={isAddTransactionSuccess}>AA 均摊</button
 				>
 				<button
 					class="tab flex-1 {splitType === 'SINGLE' ? 'tab-active' : ''}"
-					on:click={() => (splitType = 'SINGLE')}>单人承担</button
+					on:click={() => (splitType = 'SINGLE')}
+					disabled={isAddTransactionSuccess}>单人承担</button
 				>
 			</div>
 
 			{#if splitType === 'SINGLE'}
 				<div class="bg-base-200 border-primary/10 rounded-xl p-3 border">
 					<label class="label pt-0"><span class="label-text-alt font-bold">由谁承担？</span></label>
-					<select class="select select-sm select-ghost w-full" bind:value={beneficiary}>
+					<select
+						class="select select-sm select-ghost w-full"
+						bind:value={beneficiary}
+						disabled={isAddTransactionSuccess}
+					>
 						{#each members as m}
 							<option value={m.id}
 								>{m.name || m.email} {m.id === $currentUser.id ? '(自己)' : ''}</option
@@ -298,11 +413,18 @@
 				bind:value={note}
 				placeholder="写点备注..."
 				class="input input-bordered w-full"
+				disabled={isAddTransactionSuccess}
 			/>
 		</div>
 		<div class="modal-action">
-			<button class="btn btn-primary btn-block shadow-lg" on:click={addTransaction}>记一笔</button>
+			<button
+				class="btn btn-primary btn-block shadow-lg"
+				on:click={addTransaction}
+				disabled={isAddTransactionSuccess}>记一笔</button
+			>
 		</div>
 	</div>
-	<form method="dialog" class="modal-backdrop"><button>关闭</button></form>
+	<form method="dialog" class="modal-backdrop">
+		<button disabled={isAddTransactionSuccess}>关闭</button>
+	</form>
 </dialog>
