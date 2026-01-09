@@ -153,10 +153,10 @@ npm run dev
 - [x] 权限控制保持原有逻辑
 
 ### ✅ 数据库
-- [ ] 创建 invitation_codes 集合
-- [ ] 添加 max_uses 字段（Number类型）
-- [ ] 添加 used_count 字段（Number类型）
-- [ ] 配置相应权限规则
+- [x] 创建 invitation_codes 集合
+- [x] 添加 max_uses 字段（Number类型）
+- [x] 添加 used_count 字段（Number类型）
+- [x] 配置相应权限规则
 
 ## 测试流程
 
