@@ -9,6 +9,8 @@
 		ledgerName: string;
 		createdBy: string;
 		expiresAt: string;
+		maxUses: number;
+		usedCount: number;
 	} | null = null;
 	let isLoading = false;
 	let step: 'input' | 'confirm' = 'input';
@@ -237,6 +239,12 @@
 						<div class="flex justify-between">
 							<span class="text-base-content/60">有效期至：</span>
 							<span class="font-medium text-warning">{ledgerInfo.expiresAt}</span>
+						</div>
+						<div class="flex justify-between">
+							<span class="text-base-content/60">使用情况：</span>
+							<span class="font-medium text-primary"
+								>{ledgerInfo.usedCount}/{ledgerInfo.maxUses}</span
+							>
 						</div>
 					</div>
 				</div>

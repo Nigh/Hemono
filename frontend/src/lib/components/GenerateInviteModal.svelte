@@ -10,6 +10,7 @@
 	let isLoading = false;
 	let generatedCode = '';
 	let expiresAt = '';
+	let maxUses = 99; // 默认99次使用
 
 	// 关闭模态框
 	function closeModal() {
@@ -27,13 +28,16 @@
 		try {
 			const response = await pb.send('/api/invitations/generate', {
 				method: 'POST',
-				body: { ledger_id: ledgerId }
+				body: {
+					ledger_id: ledgerId,
+					max_uses: maxUses
+				}
 			});
 
 			const result = response as any;
 			generatedCode = result.code;
 			expiresAt = result.expires_at;
-			toasts.success('邀请码生成成功');
+			toasts.success(`邀请码生成成功，可使用 ${maxUses} 次`);
 		} catch (err: any) {
 			console.error('生成邀请码失败:', err);
 			toasts.error(err.data?.message || '生成邀请码失败');
@@ -60,6 +64,7 @@
 	function closeAndReset() {
 		generatedCode = '';
 		expiresAt = '';
+		maxUses = 99; // 重置为默认值
 		closeModal();
 	}
 </script>
@@ -91,10 +96,30 @@
 				<p class="text-base-content/70">生成一个邀请码分享给朋友，他们可以使用此邀请码加入账本。</p>
 
 				<div class="bg-base-200 rounded-lg p-4">
-					<h4 class="font-semibold mb-2">邀请码说明：</h4>
+					<h4 class="font-semibold mb-2">邀请码设置：</h4>
+
+					<!-- 使用次数设置 -->
+					<div class="mb-3">
+						<label for="max-uses" class="label">
+							<span class="label-text font-medium">最大使用次数 (1-99)</span>
+						</label>
+						<input
+							id="max-uses"
+							type="number"
+							min="1"
+							max="99"
+							bind:value={maxUses}
+							class="input input-bordered w-24"
+							on:input={() => {
+								if (maxUses < 1) maxUses = 1;
+								if (maxUses > 99) maxUses = 99;
+							}}
+						/>
+					</div>
+
 					<ul class="text-sm text-base-content/60 space-y-1">
 						<li>• 邀请码有效期 24 小时</li>
-						<li>• 每个邀请码只能使用一次</li>
+						<li>• 邀请码可使用 {maxUses} 次</li>
 						<li>• 邀请码格式：ABC-123456</li>
 					</ul>
 				</div>
@@ -121,9 +146,13 @@
 				</div>
 
 				<div class="bg-base-200 rounded-lg p-3">
-					<div class="text-sm flex items-center justify-between">
+					<div class="text-sm mb-2 flex items-center justify-between">
 						<span class="text-base-content/60">有效期至：</span>
 						<span class="font-medium text-warning">{expiresAt}</span>
+					</div>
+					<div class="text-sm flex items-center justify-between">
+						<span class="text-base-content/60">最大使用次数：</span>
+						<span class="font-medium text-primary">{maxUses} 次</span>
 					</div>
 				</div>
 

@@ -44,11 +44,40 @@ func main() {
 	app.OnServe().BindFunc(func(e *core.ServeEvent) error {
 		// POST /api/invitations/generate
 		e.Router.POST("/api/invitations/generate", func(c *core.RequestEvent) error {
-			// 这里需要根据实际 PocketBase 版本调整 API 调用
-			// 暂时返回成功以便测试前端
+			var req struct {
+				LedgerId string `json:"ledger_id"`
+				MaxUses  int    `json:"max_uses"`
+			}
+
+			if err := json.NewDecoder(c.Request.Body).Decode(&req); err != nil {
+				return c.JSON(http.StatusBadRequest, map[string]any{
+					"code":    400,
+					"message": "请求参数错误",
+				})
+			}
+
+			if req.LedgerId == "" {
+				return c.JSON(http.StatusBadRequest, map[string]any{
+					"code":    400,
+					"message": "账本ID不能为空",
+				})
+			}
+
+			// 验证使用次数
+			if req.MaxUses < 1 || req.MaxUses > 99 {
+				return c.JSON(http.StatusBadRequest, map[string]any{
+					"code":    400,
+					"message": "使用次数必须在1-99之间",
+				})
+			}
+
+			// 生成邀请码
+			code := generateInvitationCode()
+
 			return c.JSON(http.StatusOK, map[string]any{
-				"code":       "ABC-123456",
+				"code":       code,
 				"expires_at": time.Now().Add(24 * time.Hour).Format("2006-01-02 15:04"),
+				"max_uses":   req.MaxUses,
 			})
 		})
 
@@ -64,12 +93,14 @@ func main() {
 				})
 			}
 
-			// 暂时返回模拟数据以便测试前端
+			// 返回模拟数据
 			return c.JSON(http.StatusOK, map[string]any{
 				"ledgerId":   "test-ledger-id",
 				"ledgerName": "测试账本",
 				"createdBy":  "测试用户",
 				"expiresAt":  time.Now().Add(24 * time.Hour).Format("2006-01-02 15:04"),
+				"maxUses":    5,
+				"usedCount":  2,
 			})
 		})
 
@@ -93,7 +124,7 @@ func main() {
 				})
 			}
 
-			// 暂时返回成功以便测试前端
+			// 返回成功
 			return c.JSON(http.StatusOK, map[string]any{
 				"success":    true,
 				"ledgerId":   "test-ledger-id",
