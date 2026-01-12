@@ -837,13 +837,13 @@ func init() {
 						"autogeneratePattern": "",
 						"hidden": false,
 						"id": "text1579384326",
-						"max": 0,
-						"min": 0,
+						"max": 64,
+						"min": 1,
 						"name": "name",
 						"pattern": "",
 						"presentable": false,
 						"primaryKey": false,
-						"required": false,
+						"required": true,
 						"system": false,
 						"type": "text"
 					},
@@ -1043,7 +1043,7 @@ func init() {
 						"minSelect": 0,
 						"name": "beneficiary",
 						"presentable": false,
-						"required": true,
+						"required": false,
 						"system": false,
 						"type": "relation"
 					},
@@ -1101,6 +1101,131 @@ func init() {
 				"type": "base",
 				"updateRule": "payer = @request.auth.id",
 				"viewRule": "ledger.owner = @request.auth.id || ledger.ledger_members_via_ledger.user ?= @request.auth.id"
+			},
+			{
+				"createRule": "created_by = @request.auth.id",
+				"deleteRule": "created_by = @request.auth.id",
+				"fields": [
+					{
+						"autogeneratePattern": "[a-z0-9]{15}",
+						"hidden": false,
+						"id": "text3208210256",
+						"max": 15,
+						"min": 15,
+						"name": "id",
+						"pattern": "^[a-z0-9]+$",
+						"presentable": false,
+						"primaryKey": true,
+						"required": true,
+						"system": true,
+						"type": "text"
+					},
+					{
+						"autogeneratePattern": "",
+						"hidden": false,
+						"id": "text1997877400",
+						"max": 10,
+						"min": 10,
+						"name": "code",
+						"pattern": "^[A-Z]{3}-\\d{6}$",
+						"presentable": false,
+						"primaryKey": false,
+						"required": true,
+						"system": false,
+						"type": "text"
+					},
+					{
+						"cascadeDelete": true,
+						"collectionId": "pbc_1212822754",
+						"hidden": false,
+						"id": "relation3229328572",
+						"maxSelect": 1,
+						"minSelect": 0,
+						"name": "ledger",
+						"presentable": false,
+						"required": true,
+						"system": false,
+						"type": "relation"
+					},
+					{
+						"cascadeDelete": false,
+						"collectionId": "_pb_users_auth_",
+						"hidden": false,
+						"id": "relation3725765462",
+						"maxSelect": 1,
+						"minSelect": 0,
+						"name": "created_by",
+						"presentable": false,
+						"required": true,
+						"system": false,
+						"type": "relation"
+					},
+					{
+						"hidden": false,
+						"id": "date261981154",
+						"max": "",
+						"min": "",
+						"name": "expires_at",
+						"presentable": false,
+						"required": true,
+						"system": false,
+						"type": "date"
+					},
+					{
+						"hidden": false,
+						"id": "number2247082791",
+						"max": 99,
+						"min": 1,
+						"name": "max_uses",
+						"onlyInt": true,
+						"presentable": false,
+						"required": true,
+						"system": false,
+						"type": "number"
+					},
+					{
+						"hidden": false,
+						"id": "number1662326478",
+						"max": null,
+						"min": 0,
+						"name": "used_count",
+						"onlyInt": true,
+						"presentable": false,
+						"required": false,
+						"system": false,
+						"type": "number"
+					},
+					{
+						"hidden": false,
+						"id": "autodate2990389176",
+						"name": "created",
+						"onCreate": true,
+						"onUpdate": false,
+						"presentable": false,
+						"system": false,
+						"type": "autodate"
+					},
+					{
+						"hidden": false,
+						"id": "autodate3332085495",
+						"name": "updated",
+						"onCreate": true,
+						"onUpdate": true,
+						"presentable": false,
+						"system": false,
+						"type": "autodate"
+					}
+				],
+				"id": "pbc_2534009833",
+				"indexes": [
+					"CREATE UNIQUE INDEX ` + "`" + `idx_GnCeh9z9fr` + "`" + ` ON ` + "`" + `invitation_codes` + "`" + ` (` + "`" + `code` + "`" + `)"
+				],
+				"listRule": null,
+				"name": "invitation_codes",
+				"system": false,
+				"type": "base",
+				"updateRule": "created_by = @request.auth.id",
+				"viewRule": ""
 			}
 		]`
 
