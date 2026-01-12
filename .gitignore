@@ -5,6 +5,7 @@ backend/pb_data/
 backend/pb_backups/
 # Go 二进制编译产物
 backend/hemono
+backend/backend
 *.exe
 *.bin
 
