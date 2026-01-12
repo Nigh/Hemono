@@ -278,12 +278,7 @@
 								</div>
 								<button
 									class="btn btn-xs btn-primary btn-outline"
-									on:click={() => {
-										const modal = document.getElementById(
-											`generate_invite_${ledger.id}`
-										) as HTMLDialogElement;
-										if (modal) modal.showModal();
-									}}
+									on:click={() => openGenerateInviteModal(ledger.id, ledger.name)}
 									title="邀请成员"
 								>
 									<svg

@@ -42,6 +42,66 @@ func main() {
 
 	// 添加邀请码API路由
 	app.OnServe().BindFunc(func(e *core.ServeEvent) error {
+		// GET /api/invitations/by-ledger/{ledger_id} - 获取账本当前有效邀请码
+		e.Router.GET("/api/invitations/by-ledger/{ledger_id}", func(c *core.RequestEvent) error {
+			ledgerId := c.Request.PathValue("ledger_id")
+
+			authRecord := c.Auth
+			if authRecord == nil {
+				return c.JSON(http.StatusUnauthorized, map[string]any{
+					"code":    401,
+					"message": "未认证",
+				})
+			}
+
+			// 验证账本是否存在且用户是所有者
+			ledger, err := app.FindRecordById("ledgers", ledgerId)
+			if err != nil {
+				return c.JSON(http.StatusNotFound, map[string]any{
+					"code":    404,
+					"message": "账本不存在",
+				})
+			}
+
+			if ledger.GetString("owner") != authRecord.Id {
+				return c.JSON(http.StatusForbidden, map[string]any{
+					"code":    403,
+					"message": "只有账本所有者可以查看邀请码",
+				})
+			}
+
+			// 查找该账本的有效邀请码（未过期且未用完）
+			foundRecord, err := app.FindFirstRecordByFilter(
+				"invitation_codes",
+				"ledger = {:ledger} && used_count < max_uses && expires_at > {:now}",
+				map[string]any{"ledger": ledgerId, "now": time.Now().Format("2006-01-02 15:04:05")},
+			)
+			if err != nil || foundRecord == nil {
+				// 不存在有效邀请码
+				return c.JSON(http.StatusOK, map[string]any{
+					"exists": false,
+				})
+			}
+
+			// 清理已过期或已用完的邀请码
+			expiresAt := foundRecord.GetDateTime("expires_at").Time()
+			if time.Now().After(expiresAt) || foundRecord.GetInt("used_count") >= foundRecord.GetInt("max_uses") {
+				app.Delete(foundRecord)
+				return c.JSON(http.StatusOK, map[string]any{
+					"exists": false,
+				})
+			}
+
+			return c.JSON(http.StatusOK, map[string]any{
+				"exists":    true,
+				"id":        foundRecord.Id,
+				"code":      foundRecord.GetString("code"),
+				"expiresAt": expiresAt.Format("2006-01-02 15:04"),
+				"maxUses":   foundRecord.GetInt("max_uses"),
+				"usedCount": foundRecord.GetInt("used_count"),
+			})
+		})
+
 		// POST /api/invitations/generate
 		e.Router.POST("/api/invitations/generate", func(c *core.RequestEvent) error {
 			var req struct {
@@ -96,6 +156,30 @@ func main() {
 				})
 			}
 
+			// 检查是否已存在有效邀请码
+			existingRecord, _ := app.FindFirstRecordByFilter(
+				"invitation_codes",
+				"ledger = {:ledger} && used_count < max_uses && expires_at > {:now}",
+				map[string]any{"ledger": req.LedgerId, "now": time.Now().Format("2006-01-02 15:04:05")},
+			)
+			if existingRecord != nil {
+				// 检查是否已过期或已用完
+				expiresAt := existingRecord.GetDateTime("expires_at").Time()
+				if time.Now().Before(expiresAt) && existingRecord.GetInt("used_count") < existingRecord.GetInt("max_uses") {
+					return c.JSON(http.StatusConflict, map[string]any{
+						"code":    409,
+						"message": "该账本已存在有效邀请码",
+						"data": map[string]any{
+							"id":        existingRecord.Id,
+							"code":      existingRecord.GetString("code"),
+							"expiresAt": expiresAt.Format("2006-01-02 15:04"),
+							"maxUses":   existingRecord.GetInt("max_uses"),
+							"usedCount": existingRecord.GetInt("used_count"),
+						},
+					})
+				}
+			}
+
 			// 生成邀请码
 			code := generateInvitationCode()
 
@@ -128,6 +212,7 @@ func main() {
 				"code":       code,
 				"expires_at": time.Now().Add(24 * time.Hour).Format("2006-01-02 15:04"),
 				"max_uses":   req.MaxUses,
+				"used_count": 0,
 			})
 		})
 
@@ -156,6 +241,8 @@ func main() {
 			// 检查邀请码是否过期 (PocketBase 内部通常存为 UTC)
 			expiresAt := foundRecord.GetDateTime("expires_at").Time()
 			if time.Now().After(expiresAt) {
+				// 清理过期邀请码
+				app.Delete(foundRecord)
 				return c.JSON(http.StatusGone, map[string]any{
 					"code":    410,
 					"message": "邀请码已过期",
@@ -166,6 +253,8 @@ func main() {
 			maxUses := foundRecord.GetInt("max_uses")
 			usedCount := foundRecord.GetInt("used_count")
 			if usedCount >= maxUses {
+				// 清理已用完邀请码
+				app.Delete(foundRecord)
 				return c.JSON(http.StatusConflict, map[string]any{
 					"code":    409,
 					"message": "邀请码已被使用完",
@@ -234,6 +323,8 @@ func main() {
 			// 检查状态
 			expiresAt := foundRecord.GetDateTime("expires_at").Time()
 			if time.Now().After(expiresAt) {
+				// 清理过期邀请码
+				app.Delete(foundRecord)
 				return c.JSON(http.StatusGone, map[string]any{
 					"code":    410,
 					"message": "邀请码已过期",
@@ -241,6 +332,8 @@ func main() {
 			}
 
 			if foundRecord.GetInt("used_count") >= foundRecord.GetInt("max_uses") {
+				// 清理已用完邀请码
+				app.Delete(foundRecord)
 				return c.JSON(http.StatusConflict, map[string]any{
 					"code":    409,
 					"message": "邀请码已被使用完",
@@ -277,8 +370,15 @@ func main() {
 				})
 			}
 
-			foundRecord.Set("used_count", foundRecord.GetInt("used_count")+1)
-			app.Save(foundRecord)
+			newUsedCount := foundRecord.GetInt("used_count") + 1
+			foundRecord.Set("used_count", newUsedCount)
+
+			// 检查是否已用完，如果是则删除邀请码
+			if newUsedCount >= foundRecord.GetInt("max_uses") {
+				app.Delete(foundRecord)
+			} else {
+				app.Save(foundRecord)
+			}
 
 			ledger, _ := app.FindRecordById("ledgers", ledgerId)
 
@@ -287,6 +387,59 @@ func main() {
 				"ledgerId":   ledgerId,
 				"ledgerName": ledger.GetString("name"),
 				"message":    "成功加入账本",
+			})
+		})
+
+		// DELETE /api/invitations/{id} - 删除邀请码
+		e.Router.DELETE("/api/invitations/{id}", func(c *core.RequestEvent) error {
+			invitationId := c.Request.PathValue("id")
+
+			authRecord := c.Auth
+			if authRecord == nil {
+				return c.JSON(http.StatusUnauthorized, map[string]any{
+					"code":    401,
+					"message": "未认证",
+				})
+			}
+
+			// 查找邀请码
+			foundRecord, err := app.FindRecordById("invitation_codes", invitationId)
+			if err != nil {
+				return c.JSON(http.StatusNotFound, map[string]any{
+					"code":    404,
+					"message": "邀请码不存在",
+				})
+			}
+
+			ledgerId := foundRecord.GetString("ledger")
+
+			// 验证账本是否存在且用户是所有者
+			ledger, err := app.FindRecordById("ledgers", ledgerId)
+			if err != nil {
+				return c.JSON(http.StatusNotFound, map[string]any{
+					"code":    404,
+					"message": "账本不存在",
+				})
+			}
+
+			if ledger.GetString("owner") != authRecord.Id {
+				return c.JSON(http.StatusForbidden, map[string]any{
+					"code":    403,
+					"message": "只有账本所有者可以删除邀请码",
+				})
+			}
+
+			// 删除邀请码
+			if err := app.Delete(foundRecord); err != nil {
+				return c.JSON(http.StatusInternalServerError, map[string]any{
+					"code":    500,
+					"message": "删除邀请码失败",
+				})
+			}
+
+			return c.JSON(http.StatusOK, map[string]any{
+				"success": true,
+				"message": "邀请码已删除",
 			})
 		})
 
