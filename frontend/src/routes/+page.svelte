@@ -11,6 +11,12 @@
 	let members: any[] = [];
 	let expandedLedger = '';
 	let activeLedgerName = ''; // 当前展开的账本名称
+	let inviteModals: Map<string, { open: () => void; resetState: () => void }> = new Map();
+
+	function handleRegisterInviteModal(e: CustomEvent) {
+		const { ledgerId, methods } = e.detail;
+		inviteModals.set(ledgerId, methods);
+	}
 
 	let operationMessage: {
 		type: OperationMessageType;
@@ -59,11 +65,9 @@
 
 	// 打开生成邀请码模态框
 	function openGenerateInviteModal(ledgerId: string, ledgerName: string) {
-		const modal = document.getElementById(`generate_invite_${ledgerId}`) as HTMLDialogElement;
+		const modal = inviteModals[ledgerId];
 		if (modal) {
-			// 设置全局标志，触发模态框内的检查逻辑
-			(modal as any)._checkInvitation = true;
-			modal.showModal();
+			modal.open();
 		}
 	}
 
@@ -441,5 +445,9 @@
 </dialog>
 
 {#each ledgers as ledger}
-	<GenerateInviteModal ledgerId={ledger.id} ledgerName={ledger.name} />
+	<GenerateInviteModal
+		ledgerId={ledger.id}
+		ledgerName={ledger.name}
+		on:register={handleRegisterInviteModal}
+	/>
 {/each}

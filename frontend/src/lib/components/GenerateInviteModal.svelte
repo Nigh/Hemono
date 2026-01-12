@@ -1,11 +1,13 @@
 <script lang="ts">
 	import { pb, currentUser } from '$lib/pb';
 	import { toasts } from '$lib/toast';
-	import { onMount } from 'svelte';
+	import { createEventDispatcher, onMount } from 'svelte';
 
 	// Props
 	export let ledgerId: string;
 	export let ledgerName: string;
+
+	const dispatch = createEventDispatcher();
 
 	// 状态管理
 	let isLoading = false;
@@ -14,13 +16,12 @@
 	let maxUses = 99;
 	let usedCount = 0;
 	let invitationId = '';
-	let shouldCheckInvitation = false;
+	let dialogElement: HTMLDialogElement;
 
-	// 监听 shouldCheckInvitation 变化
-	$: if (shouldCheckInvitation) {
-		checkExistingInvitation();
-		shouldCheckInvitation = false;
-	}
+	onMount(() => {
+		// 注册到父组件
+		dispatch('register', { ledgerId, methods: { open, resetState } });
+	});
 
 	// 关闭模态框
 	function closeModal() {
@@ -67,6 +68,19 @@
 		} finally {
 			isLoading = false;
 		}
+	}
+
+	// 对外暴露的打开方法
+	export function open() {
+		checkExistingInvitation();
+		if (dialogElement) {
+			dialogElement.showModal();
+		}
+	}
+
+	// 对外暴露的重置方法
+	export function resetState() {
+		reset();
 	}
 
 	// 生成邀请码
@@ -194,7 +208,8 @@
 		invitationId = '';
 		isLoading = false;
 	}
-	function handleDialogClick(e) {
+
+	function handleDialogClick(e: MouseEvent) {
 		const dialog = e.currentTarget as HTMLDialogElement;
 		if (e.target === dialog) {
 			closeAndReset();
@@ -205,9 +220,9 @@
 <dialog
 	id="generate_invite_{ledgerId}"
 	class="modal modal-bottom sm:modal-middle"
+	bind:this={dialogElement}
 	onclose={closeAndReset}
 	onclick={handleDialogClick}
-	onshow={() => (shouldCheckInvitation = true)}
 >
 	<div class="modal-box border">
 		<div class="mb-4 flex items-center justify-between">
