@@ -65,7 +65,7 @@
 
 	// 打开生成邀请码模态框
 	function openGenerateInviteModal(ledgerId: string, ledgerName: string) {
-		const modal = inviteModals[ledgerId];
+		const modal = inviteModals.get(ledgerId);
 		if (modal) {
 			modal.open();
 		}

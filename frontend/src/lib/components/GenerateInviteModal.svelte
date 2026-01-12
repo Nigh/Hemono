@@ -23,11 +23,23 @@
 		dispatch('register', { ledgerId, methods: { open, resetState } });
 	});
 
-	// 关闭模态框
-	function closeModal() {
-		reset();
-		const modal = document.getElementById(`generate_invite_${ledgerId}`) as HTMLDialogElement;
-		if (modal) modal.close();
+	// 仅执行关闭动作，不立即重置数据
+	function handleClose() {
+		if (dialogElement) dialogElement.close();
+	}
+
+	// 当 dialog 真正关闭后，再执行数据重置
+	function onDialogClose() {
+		// 给一点点缓冲时间，确保动画完成
+		setTimeout(() => {
+			reset();
+		}, 250);
+	}
+
+	function handleDialogClick(e: MouseEvent) {
+		if (e.target === dialogElement) {
+			handleClose(); // 调用关闭
+		}
 	}
 
 	// 打开模态框时检查是否已存在有效邀请码
@@ -72,10 +84,11 @@
 
 	// 对外暴露的打开方法
 	export function open() {
-		checkExistingInvitation();
 		if (dialogElement) {
 			dialogElement.showModal();
 		}
+		// 先显示模态框，同时在后台静默刷新/加载数据
+		checkExistingInvitation();
 	}
 
 	// 对外暴露的重置方法
@@ -189,16 +202,6 @@
 		}
 	}
 
-	// 关闭并重置
-	function closeAndReset() {
-		generatedCode = '';
-		expiresAt = '';
-		maxUses = 99;
-		usedCount = 0;
-		invitationId = '';
-		closeModal();
-	}
-
 	// 重置
 	function reset() {
 		generatedCode = '';
@@ -208,26 +211,19 @@
 		invitationId = '';
 		isLoading = false;
 	}
-
-	function handleDialogClick(e: MouseEvent) {
-		const dialog = e.currentTarget as HTMLDialogElement;
-		if (e.target === dialog) {
-			closeAndReset();
-		}
-	}
 </script>
 
 <dialog
 	id="generate_invite_{ledgerId}"
 	class="modal modal-bottom sm:modal-middle"
 	bind:this={dialogElement}
-	onclose={closeAndReset}
+	onclose={onDialogClose}
 	onclick={handleDialogClick}
 >
 	<div class="modal-box border">
 		<div class="mb-4 flex items-center justify-between">
 			<h3 class="text-lg font-bold">邀请成员加入「{ledgerName}」</h3>
-			<button class="btn btn-ghost btn-sm" onclick={closeAndReset}>
+			<button class="btn btn-ghost btn-sm" onclick={handleClose}>
 				<svg
 					xmlns="http://www.w3.org/2000/svg"
 					class="h-4 w-4"
@@ -354,7 +350,7 @@
 				</div>
 
 				<div class="modal-action">
-					<button class="btn btn-ghost" onclick={closeAndReset} disabled={isLoading}>取消</button>
+					<button class="btn btn-ghost" onclick={handleClose} disabled={isLoading}>取消</button>
 					<button class="btn btn-primary" onclick={generateInvitation} disabled={isLoading}>
 						{#if isLoading}
 							<span class="loading loading-spinner loading-sm"></span>
@@ -366,6 +362,6 @@
 		{/if}
 	</div>
 	<form method="dialog" class="modal-backdrop">
-		<button onclick={closeAndReset}>关闭</button>
+		<button onclick={handleClose}>关闭</button>
 	</form>
 </dialog>
