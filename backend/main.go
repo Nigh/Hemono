@@ -81,15 +81,7 @@ func main() {
 			}
 
 			// 验证账本是否存在且用户是所有者
-			ledgerCollection, err := app.FindCollectionByNameOrId("ledgers")
-			if err != nil {
-				return c.JSON(http.StatusInternalServerError, map[string]any{
-					"code":    500,
-					"message": "内部服务器错误",
-				})
-			}
-
-			ledger, err := app.FindRecordById(ledgerCollection, req.LedgerId)
+			ledger, err := app.FindRecordById("ledgers", req.LedgerId)
 			if err != nil {
 				return c.JSON(http.StatusNotFound, map[string]any{
 					"code":    404,
@@ -141,15 +133,7 @@ func main() {
 
 		// GET /api/invitations/by-code/{code}
 		e.Router.GET("/api/invitations/by-code/{code}", func(c *core.RequestEvent) error {
-			// 获取URL路径中的邀请码
-			path := c.Request.URL.Path
-			if !strings.HasPrefix(path, "/api/invitations/by-code/") {
-				return c.JSON(http.StatusBadRequest, map[string]any{
-					"code":    400,
-					"message": "无效的URL路径",
-				})
-			}
-			code := strings.TrimPrefix(path, "/api/invitations/by-code/")
+			code := c.Request.PathValue("code") // 使用 Go 1.22+ 路由参数获取方式
 
 			// 验证邀请码格式
 			matched, _ := regexp.MatchString("^[A-Z]{3}-\\d{6}$", code)
@@ -160,17 +144,8 @@ func main() {
 				})
 			}
 
-			// 查询邀请码
-			invitationCollection, err := app.FindCollectionByNameOrId("invitation_codes")
-			if err != nil {
-				return c.JSON(http.StatusInternalServerError, map[string]any{
-					"code":    500,
-					"message": "内部服务器错误",
-				})
-			}
-
-			// 使用filter查询特定的邀请码
-			foundRecord, err := app.FindFirstRecordByData(invitationCollection, "code", code)
+			// 使用新 API 查询特定的邀请码
+			foundRecord, err := app.FindFirstRecordByFilter("invitation_codes", "code = {:code}", map[string]any{"code": code})
 			if err != nil {
 				return c.JSON(http.StatusNotFound, map[string]any{
 					"code":    404,
@@ -178,16 +153,8 @@ func main() {
 				})
 			}
 
-			// 检查邀请码是否过期
-			expiresAtStr := foundRecord.GetString("expires_at")
-			expiresAt, err := time.Parse("2006-01-02 15:04:05", expiresAtStr)
-			if err != nil {
-				return c.JSON(http.StatusInternalServerError, map[string]any{
-					"code":    500,
-					"message": "内部服务器错误",
-				})
-			}
-
+			// 检查邀请码是否过期 (PocketBase 内部通常存为 UTC)
+			expiresAt := foundRecord.GetDateTime("expires_at").Time()
 			if time.Now().After(expiresAt) {
 				return c.JSON(http.StatusGone, map[string]any{
 					"code":    410,
@@ -205,17 +172,9 @@ func main() {
 				})
 			}
 
-			// 获取账本信息
+			// 获取关联信息
 			ledgerId := foundRecord.GetString("ledger")
-			ledgerCollection, err := app.FindCollectionByNameOrId("ledgers")
-			if err != nil {
-				return c.JSON(http.StatusInternalServerError, map[string]any{
-					"code":    500,
-					"message": "内部服务器错误",
-				})
-			}
-
-			ledger, err := app.FindRecordById(ledgerCollection, ledgerId)
+			ledger, err := app.FindRecordById("ledgers", ledgerId)
 			if err != nil {
 				return c.JSON(http.StatusNotFound, map[string]any{
 					"code":    404,
@@ -223,9 +182,8 @@ func main() {
 				})
 			}
 
-			// 获取创建者信息
 			createdById := foundRecord.GetString("created_by")
-			userCollection, err := app.FindCollectionByNameOrId("users")
+			creator, err := app.FindRecordById("users", createdById)
 			if err != nil {
 				return c.JSON(http.StatusInternalServerError, map[string]any{
 					"code":    500,
@@ -233,20 +191,11 @@ func main() {
 				})
 			}
 
-			creator, err := app.FindRecordById(userCollection, createdById)
-			if err != nil {
-				return c.JSON(http.StatusInternalServerError, map[string]any{
-					"code":    500,
-					"message": "内部服务器错误",
-				})
-			}
-
-			// 返回邀请码信息
 			return c.JSON(http.StatusOK, map[string]any{
 				"ledgerId":   ledgerId,
 				"ledgerName": ledger.GetString("name"),
 				"createdBy":  creator.GetString("name"),
-				"expiresAt":  expiresAtStr,
+				"expiresAt":  expiresAt.Format("2006-01-02 15:04:05"),
 				"maxUses":    maxUses,
 				"usedCount":  usedCount,
 			})
@@ -265,23 +214,6 @@ func main() {
 				})
 			}
 
-			if req.Code == "" {
-				return c.JSON(http.StatusBadRequest, map[string]any{
-					"code":    400,
-					"message": "邀请码不能为空",
-				})
-			}
-
-			// 验证邀请码格式
-			matched, _ := regexp.MatchString("^[A-Z]{3}-\\d{6}$", req.Code)
-			if !matched {
-				return c.JSON(http.StatusBadRequest, map[string]any{
-					"code":    400,
-					"message": "邀请码格式不正确",
-				})
-			}
-
-			// 获取当前用户
 			authRecord := c.Auth
 			if authRecord == nil {
 				return c.JSON(http.StatusUnauthorized, map[string]any{
@@ -291,15 +223,7 @@ func main() {
 			}
 
 			// 查询邀请码
-			invitationCollection, err := app.FindCollectionByNameOrId("invitation_codes")
-			if err != nil {
-				return c.JSON(http.StatusInternalServerError, map[string]any{
-					"code":    500,
-					"message": "内部服务器错误",
-				})
-			}
-
-			foundRecord, err := app.FindFirstRecordByData(invitationCollection, "code", req.Code)
+			foundRecord, err := app.FindFirstRecordByFilter("invitation_codes", "code = {:code}", map[string]any{"code": req.Code})
 			if err != nil {
 				return c.JSON(http.StatusNotFound, map[string]any{
 					"code":    404,
@@ -307,16 +231,8 @@ func main() {
 				})
 			}
 
-			// 检查邀请码是否过期
-			expiresAtStr := foundRecord.GetString("expires_at")
-			expiresAt, err := time.Parse("2006-01-02 15:04:05", expiresAtStr)
-			if err != nil {
-				return c.JSON(http.StatusInternalServerError, map[string]any{
-					"code":    500,
-					"message": "内部服务器错误",
-				})
-			}
-
+			// 检查状态
+			expiresAt := foundRecord.GetDateTime("expires_at").Time()
 			if time.Now().After(expiresAt) {
 				return c.JSON(http.StatusGone, map[string]any{
 					"code":    410,
@@ -324,91 +240,48 @@ func main() {
 				})
 			}
 
-			// 检查邀请码是否已用完
-			maxUses := foundRecord.GetInt("max_uses")
-			usedCount := foundRecord.GetInt("used_count")
-			if usedCount >= maxUses {
+			if foundRecord.GetInt("used_count") >= foundRecord.GetInt("max_uses") {
 				return c.JSON(http.StatusConflict, map[string]any{
 					"code":    409,
 					"message": "邀请码已被使用完",
 				})
 			}
 
-			// 获取账本ID
 			ledgerId := foundRecord.GetString("ledger")
 
-			// 检查用户是否已经是该账本的成员
-			ledgerMembersCollection, err := app.FindCollectionByNameOrId("ledger_members")
-			if err != nil {
-				return c.JSON(http.StatusInternalServerError, map[string]any{
-					"code":    500,
-					"message": "内部服务器错误",
-				})
-			}
-
-			// 查询所有成员记录并检查用户是否已经是成员
-			allMemberRecords, err := app.Dao().FindRecords(
-				ledgerMembersCollection,
-				"",
+			// 【修复点】检查是否已经是成员：使用 Filter 查询，不再需要 app.Dao().FindRecords()
+			existingMember, _ := app.FindFirstRecordByFilter(
+				"ledger_members",
+				"ledger = {:ledger} && user = {:user}",
+				map[string]any{"ledger": ledgerId, "user": authRecord.Id},
 			)
 
-			if err != nil {
-				return c.JSON(http.StatusInternalServerError, map[string]any{
-					"code":    500,
-					"message": "内部服务器错误",
+			if existingMember != nil {
+				return c.JSON(http.StatusConflict, map[string]any{
+					"code":    409,
+					"message": "你已经是该账本的成员",
 				})
 			}
 
-			// 检查用户是否已是成员
-			for _, memberRecord := range allMemberRecords {
-				if memberRecord.GetString("ledger") == ledgerId && memberRecord.GetString("user") == authRecord.Id {
-					return c.JSON(http.StatusConflict, map[string]any{
-						"code":    409,
-						"message": "你已经是该账本的成员",
-					})
-				}
-			}
+			// 写入成员并更新计数（推荐在事务中执行，这里简化处理）
+			memberCollection, _ := app.FindCollectionByNameOrId("ledger_members")
+			newMember := core.NewRecord(memberCollection)
+			newMember.Set("ledger", ledgerId)
+			newMember.Set("user", authRecord.Id)
+			newMember.Set("role", "member")
 
-			// 添加用户到账本成员
-			memberRecord := core.NewRecord(ledgerMembersCollection)
-			memberRecord.Set("ledger", ledgerId)
-			memberRecord.Set("user", authRecord.Id)
-			memberRecord.Set("role", "member")
-
-			if err := app.Save(memberRecord); err != nil {
+			if err := app.Save(newMember); err != nil {
 				return c.JSON(http.StatusInternalServerError, map[string]any{
 					"code":    500,
 					"message": "加入账本失败",
 				})
 			}
 
-			// 增加邀请码使用次数
-			foundRecord.Set("used_count", usedCount+1)
-			if err := app.Save(foundRecord); err != nil {
-				return c.JSON(http.StatusInternalServerError, map[string]any{
-					"code":    500,
-					"message": "更新邀请码状态失败",
-				})
-			}
+			foundRecord.Set("used_count", foundRecord.GetInt("used_count")+1)
+			app.Save(foundRecord)
 
-			// 获取账本信息
-			ledgerCollection, err := app.FindCollectionByNameOrId("ledgers")
-			if err != nil {
-				return c.JSON(http.StatusInternalServerError, map[string]any{
-					"code":    500,
-					"message": "内部服务器错误",
-				})
-			}
+			ledger, _ := app.FindRecordById("ledgers", ledgerId)
 
-			ledger, err := app.FindRecordById(ledgerCollection, ledgerId)
-			if err != nil {
-				return c.JSON(http.StatusNotFound, map[string]any{
-					"code":    404,
-					"message": "账本不存在",
-				})
-			}
-
-			// 返回成功
 			return c.JSON(http.StatusOK, map[string]any{
 				"success":    true,
 				"ledgerId":   ledgerId,
