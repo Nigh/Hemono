@@ -34,7 +34,6 @@ func generateInvitationCode() string {
 
 func main() {
 	app := pocketbase.New()
-	rand.Seed(time.Now().UnixNano())
 
 	migratecmd.MustRegister(app, app.RootCmd, migratecmd.Config{
 		Dir: "migrations",
@@ -342,7 +341,6 @@ func main() {
 
 			ledgerId := foundRecord.GetString("ledger")
 
-			// 【修复点】检查是否已经是成员：使用 Filter 查询，不再需要 app.Dao().FindRecords()
 			existingMember, _ := app.FindFirstRecordByFilter(
 				"ledger_members",
 				"ledger = {:ledger} && user = {:user}",
