@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { pb, currentUser } from '$lib/pb';
 	import { toasts } from '$lib/toast';
+	import { onMount } from 'svelte';
 
 	// Props
 	export let ledgerId: string;
@@ -13,6 +14,13 @@
 	let maxUses = 99;
 	let usedCount = 0;
 	let invitationId = '';
+	let shouldCheckInvitation = false;
+
+	// 监听 shouldCheckInvitation 变化
+	$: if (shouldCheckInvitation) {
+		checkExistingInvitation();
+		shouldCheckInvitation = false;
+	}
 
 	// 关闭模态框
 	function closeModal() {
@@ -59,13 +67,6 @@
 		} finally {
 			isLoading = false;
 		}
-	}
-
-	// 打开模态框时触发检查
-	function openModal() {
-		checkExistingInvitation();
-		const modal = document.getElementById(`generate_invite_${ledgerId}`) as HTMLDialogElement;
-		if (modal) modal.showModal();
 	}
 
 	// 生成邀请码
@@ -193,23 +194,25 @@
 		invitationId = '';
 		isLoading = false;
 	}
+	function handleDialogClick(e) {
+		const dialog = e.currentTarget as HTMLDialogElement;
+		if (e.target === dialog) {
+			closeAndReset();
+		}
+	}
 </script>
 
 <dialog
 	id="generate_invite_{ledgerId}"
 	class="modal modal-bottom sm:modal-middle"
-	on:close={closeAndReset}
-	on:click={(e) => {
-		const dialog = e.currentTarget as HTMLDialogElement;
-		if (e.target === dialog) {
-			closeAndReset();
-		}
-	}}
+	onclose={closeAndReset}
+	onclick={handleDialogClick}
+	onshow={() => (shouldCheckInvitation = true)}
 >
 	<div class="modal-box border">
 		<div class="mb-4 flex items-center justify-between">
 			<h3 class="text-lg font-bold">邀请成员加入「{ledgerName}」</h3>
-			<button class="btn btn-ghost btn-sm" on:click={closeAndReset}>
+			<button class="btn btn-ghost btn-sm" onclick={closeAndReset}>
 				<svg
 					xmlns="http://www.w3.org/2000/svg"
 					class="h-4 w-4"
@@ -260,17 +263,13 @@
 				</div>
 
 				<div class="modal-action">
-					<button
-						class="btn btn-error btn-outline"
-						on:click={deleteInvitation}
-						disabled={isLoading}
-					>
+					<button class="btn btn-error btn-outline" onclick={deleteInvitation} disabled={isLoading}>
 						{#if isLoading}
 							<span class="loading loading-spinner loading-sm"></span>
 						{/if}
 						删除邀请码
 					</button>
-					<button class="btn btn-ghost" on:click={refreshInvitationStatus} disabled={isLoading}>
+					<button class="btn btn-ghost" onclick={refreshInvitationStatus} disabled={isLoading}>
 						<svg
 							xmlns="http://www.w3.org/2000/svg"
 							class="h-4 w-4 mr-1"
@@ -287,7 +286,7 @@
 						</svg>
 						刷新
 					</button>
-					<button class="btn btn-primary" on:click={copyCode} disabled={isLoading}>
+					<button class="btn btn-primary" onclick={copyCode} disabled={isLoading}>
 						<svg
 							xmlns="http://www.w3.org/2000/svg"
 							class="h-4 w-4 mr-2"
@@ -325,7 +324,7 @@
 							max="99"
 							bind:value={maxUses}
 							class="input input-bordered w-24"
-							on:input={() => {
+							oninput={() => {
 								if (maxUses < 1) maxUses = 1;
 								if (maxUses > 99) maxUses = 99;
 							}}
@@ -340,8 +339,8 @@
 				</div>
 
 				<div class="modal-action">
-					<button class="btn btn-ghost" on:click={closeAndReset} disabled={isLoading}>取消</button>
-					<button class="btn btn-primary" on:click={generateInvitation} disabled={isLoading}>
+					<button class="btn btn-ghost" onclick={closeAndReset} disabled={isLoading}>取消</button>
+					<button class="btn btn-primary" onclick={generateInvitation} disabled={isLoading}>
 						{#if isLoading}
 							<span class="loading loading-spinner loading-sm"></span>
 						{/if}
@@ -352,6 +351,6 @@
 		{/if}
 	</div>
 	<form method="dialog" class="modal-backdrop">
-		<button on:click={closeAndReset}>关闭</button>
+		<button onclick={closeAndReset}>关闭</button>
 	</form>
 </dialog>

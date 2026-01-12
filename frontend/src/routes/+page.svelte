@@ -60,7 +60,11 @@
 	// 打开生成邀请码模态框
 	function openGenerateInviteModal(ledgerId: string, ledgerName: string) {
 		const modal = document.getElementById(`generate_invite_${ledgerId}`) as HTMLDialogElement;
-		if (modal) modal.showModal();
+		if (modal) {
+			// 设置全局标志，触发模态框内的检查逻辑
+			(modal as any)._checkInvitation = true;
+			modal.showModal();
+		}
 	}
 
 	function onCreateLedgerModalClose() {
