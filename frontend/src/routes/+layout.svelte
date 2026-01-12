@@ -3,6 +3,7 @@
 	import { pb, currentUser } from '$lib/pb';
 	import { onMount } from 'svelte';
 	import Toast from '$lib/components/Toast.svelte';
+	import JoinLedgerModal from '$lib/components/JoinLedgerModal.svelte';
 	import { toasts } from '$lib/toast';
 
 	// 退出登录
@@ -20,6 +21,12 @@
 			console.error('Login failed:', err);
 			toasts.error(`登录失败: ${err.message || '未知错误'}`);
 		}
+	}
+
+	// 打开加入账本模态框
+	function openJoinLedgerModal() {
+		const modal = document.getElementById('join_ledger_modal') as HTMLDialogElement;
+		if (modal) modal.showModal();
 	}
 </script>
 
@@ -51,6 +58,7 @@
 						<li class="menu-title mb-2 border-b">
 							<span class="tooltip" data-tip={$currentUser.email}>{$currentUser.name}</span>
 						</li>
+						<li><button on:click={openJoinLedgerModal}>📥 加入账本</button></li>
 						<li><button on:click={logout} class="text-error">退出登录</button></li>
 					</ul>
 				</div>
@@ -73,4 +81,6 @@
 			</div>
 		{/if}
 	</main>
+
+	<JoinLedgerModal />
 </div>

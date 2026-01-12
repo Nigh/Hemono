@@ -2,6 +2,7 @@
 	import { pb, currentUser } from '$lib/pb';
 	import { onMount } from 'svelte';
 	import { toasts } from '$lib/toast';
+	import GenerateInviteModal from '$lib/components/GenerateInviteModal.svelte';
 
 	type OperationMessageType = 'success' | 'error' | 'warning';
 	type OperationMessageScope = 'createLedger' | 'addTransaction';
@@ -54,6 +55,12 @@
 	function openAddTransactionModal() {
 		clearOperationMessage();
 		(window as any).add_modal.showModal();
+	}
+
+	// 打开生成邀请码模态框
+	function openGenerateInviteModal(ledgerId: string, ledgerName: string) {
+		const modal = document.getElementById(`generate_invite_${ledgerId}`) as HTMLDialogElement;
+		if (modal) modal.showModal();
 	}
 
 	function onCreateLedgerModalClose() {
@@ -271,7 +278,12 @@
 								</div>
 								<button
 									class="btn btn-xs btn-primary btn-outline"
-									on:click={() => {}}
+									on:click={() => {
+										const modal = document.getElementById(
+											`generate_invite_${ledger.id}`
+										) as HTMLDialogElement;
+										if (modal) modal.showModal();
+									}}
 									title="邀请成员"
 								>
 									<svg
@@ -428,3 +440,7 @@
 		<button disabled={isAddTransactionSuccess}>关闭</button>
 	</form>
 </dialog>
+
+{#each ledgers as ledger}
+	<GenerateInviteModal ledgerId={ledger.id} ledgerName={ledger.name} />
+{/each}
