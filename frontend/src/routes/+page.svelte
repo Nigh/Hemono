@@ -11,6 +11,12 @@
 	let members: any[] = [];
 	let expandedLedger = '';
 	let activeLedgerName = ''; // 当前展开的账本名称
+	let inviteModals: Map<string, { open: () => void; resetState: () => void }> = new Map();
+
+	function handleRegisterInviteModal(e: CustomEvent) {
+		const { ledgerId, methods } = e.detail;
+		inviteModals.set(ledgerId, methods);
+	}
 
 	let operationMessage: {
 		type: OperationMessageType;
@@ -59,8 +65,10 @@
 
 	// 打开生成邀请码模态框
 	function openGenerateInviteModal(ledgerId: string, ledgerName: string) {
-		const modal = document.getElementById(`generate_invite_${ledgerId}`) as HTMLDialogElement;
-		if (modal) modal.showModal();
+		const modal = inviteModals.get(ledgerId);
+		if (modal) {
+			modal.open();
+		}
 	}
 
 	function onCreateLedgerModalClose() {
@@ -278,12 +286,7 @@
 								</div>
 								<button
 									class="btn btn-xs btn-primary btn-outline"
-									on:click={() => {
-										const modal = document.getElementById(
-											`generate_invite_${ledger.id}`
-										) as HTMLDialogElement;
-										if (modal) modal.showModal();
-									}}
+									on:click={() => openGenerateInviteModal(ledger.id, ledger.name)}
 									title="邀请成员"
 								>
 									<svg
@@ -442,5 +445,9 @@
 </dialog>
 
 {#each ledgers as ledger}
-	<GenerateInviteModal ledgerId={ledger.id} ledgerName={ledger.name} />
+	<GenerateInviteModal
+		ledgerId={ledger.id}
+		ledgerName={ledger.name}
+		on:register={handleRegisterInviteModal}
+	/>
 {/each}
