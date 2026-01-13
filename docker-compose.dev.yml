@@ -1,0 +1,53 @@
+version: '3.9'
+
+services:
+  # 后端服务
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: hemono-backend-dev
+    ports:
+      - "8090:8090"
+    environment:
+      PB_DATA_DIR: /pb_data
+      TZ: Asia/Shanghai
+    volumes:
+      # 源代码卷（用于调试）
+      - ./backend:/app
+    restart: unless-stopped
+    networks:
+      - hemono-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8090/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # 前端服务
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: builder
+    container_name: hemono-frontend-dev
+    ports:
+      - "5173:5173"
+    environment:
+      VITE_API_URL: http://127.0.0.1:8090
+      TZ: Asia/Shanghai
+    volumes:
+      # 源代码卷 - 支持热更新
+      - ./frontend:/app
+      - /app/node_modules
+    working_dir: /app
+    command: npm run dev -- --host 0.0.0.0
+    restart: unless-stopped
+    networks:
+      - hemono-network
+    depends_on:
+      - backend
+
+networks:
+  hemono-network:
+    driver: bridge
