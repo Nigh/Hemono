@@ -6,8 +6,16 @@ export default defineConfig({
 	plugins: [tailwindcss(), sveltekit()],
 	server: {
 		proxy: {
-			'/api': 'http://127.0.0.1:8090',
-			'/_/': 'http://127.0.0.1:8090'
-		}
+			'/api': {
+				target: 'http://backend:8090',
+				changeOrigin: true
+			},
+			'/_': {
+				target: 'http://backend:8090',
+				changeOrigin: true
+			}
+		},
+		host: true,
+    	port: 5173,
 	}
 });

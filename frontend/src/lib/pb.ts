@@ -1,13 +1,27 @@
 import PocketBase from 'pocketbase';
 import { writable } from 'svelte/store';
 
-export const pb = new PocketBase('http://127.0.0.1:8090');
+// 自动检测 API 地址
+const getApiUrl = () => {
+	// 优先使用环境变量
+	if (import.meta.env.VITE_API_URL) {
+		return import.meta.env.VITE_API_URL;
+	}
 
-// 初始化时直接读取 authStore 的当前模型
+	// 生产环境：使用当前 origin（通过 Caddy 反代）
+	if (import.meta.env.PROD) {
+		return window.location.origin;
+	}
+
+	// 开发环境：指向本地后端
+	return 'http://127.0.0.1:8090';
+};
+
+export const pb = new PocketBase(getApiUrl());
+
 export const currentUser = writable(pb.authStore.model);
 
-// 监听 auth 状态变化（登录、退出、Token 过期）
 pb.authStore.onChange((token, model) => {
 	console.log('Auth state changed:', model);
 	currentUser.set(model);
-}, true); // true 表示立即触发一次当前状态
+}, true);

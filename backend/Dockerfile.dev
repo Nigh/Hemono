@@ -1,0 +1,18 @@
+# Dockerfile-backend.dev
+FROM golang:1.25-alpine
+
+# 安装 Air 所需依赖
+RUN apk add --no-cache gcc musl-dev sqlite-dev git
+
+# 安装最新版 Air
+RUN go install github.com/air-verse/air@latest
+
+WORKDIR /app
+
+# 仅复制依赖文件以利用缓存
+COPY go.mod go.sum ./
+RUN go mod download
+
+EXPOSE 8090
+
+CMD ["air", "-c", ".air.toml"]

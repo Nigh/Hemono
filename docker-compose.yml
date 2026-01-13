@@ -1,5 +1,3 @@
-version: '3.9'
-
 services:
   # 后端服务
   backend:
@@ -11,7 +9,6 @@ services:
       PB_DATA_DIR: /pb_data
       TZ: Asia/Shanghai
     volumes:
-      # 数据库持久化
       - hemono_pb_data:/pb_data
     restart: unless-stopped
     networks:
@@ -37,7 +34,6 @@ services:
       - "5173"
 
 volumes:
-  # PocketBase 数据库持久化卷
   hemono_pb_data:
     driver: local
 
