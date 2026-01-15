@@ -1,0 +1,58 @@
+services:
+  # 后端服务
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    image: hemono-go:dev
+    container_name: hemono-backend-dev
+    ports:
+      - "8090:8090"
+    environment:
+      PB_DATA_DIR: /pb_data
+      TZ: Asia/Shanghai
+    volumes:
+      - hemono_pb_data_dev:/pb_data 
+      - ./backend:/app
+    restart: unless-stopped
+    networks:
+      - hemono-network
+
+  # 前端服务
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: builder # 使用构建阶段，因为该阶段包含了 bun 环境
+    image: hemono-web:dev
+    container_name: hemono-frontend-dev
+    ports:
+      - "5173:5173"
+    environment:
+      # 在浏览器访问时，应指向 localhost；如果是 SSR，则指向 backend
+      VITE_API_URL: http://localhost:8090
+      TZ: Asia/Shanghai
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules # 匿名卷，防止本地 node_modules 覆盖容器内 bun 安装的依赖
+      - /app/.vite        # 缓存 Vite 的预构建产物，加快二次启动
+    working_dir: /app
+    # 覆盖 Dockerfile 的 CMD，直接启动热更新开发服务器
+    command: bun run dev --host 0.0.0.0
+    restart: unless-stopped
+    networks:
+      - hemono-network
+    depends_on:
+      - backend
+
+volumes:
+  hemono_pb_data_dev:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${PWD}/pb_data
+
+networks:
+  hemono-network:
+    driver: bridge

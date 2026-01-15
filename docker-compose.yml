@@ -1,0 +1,52 @@
+services:
+  # 后端服务
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    image: hemono-go:prod
+    container_name: hemono-backend
+    environment:
+      PB_DATA_DIR: /pb_data
+      TZ: Asia/Shanghai
+    volumes:
+      - hemono_pb_data:/pb_data
+    restart: unless-stopped
+    networks:
+      - hemono-network
+    ports:
+      - "8090:8090"
+    # expose:
+    #   - "8090"
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8090/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # 前端服务
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    image: hemono-web:prod
+    container_name: hemono-frontend
+    restart: unless-stopped
+    networks:
+      - hemono-network
+    ports:
+      - "5173:5173"
+    # expose:
+    #   - "5173"
+
+volumes:
+  hemono_pb_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${PWD}/pb_data
+
+networks:
+  hemono-network:
+    driver: bridge

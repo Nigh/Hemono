@@ -1,5 +1,5 @@
 # --- PocketBase & Backend ---
-# 核心数据库文件夹（包含你的数据和设置），绝对不能上传
+# 核心数据库文件夹（包含你的数据和设置）
 backend/pb_data/
 # 如果你使用了本地备份
 backend/pb_backups/
@@ -8,6 +8,7 @@ backend/hemono
 backend/backend
 *.exe
 *.bin
+pb_data
 
 # --- Frontend (Bun & SvelteKit) ---
 # 依赖库
