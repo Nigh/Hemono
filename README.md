@@ -23,3 +23,24 @@ docker compose -f docker-compose.dev.yml up -d
 ```sh
 docker compose -f docker-compose.yml up -d
 ```
+
+### Reverse proxy with Caddy
+Example Caddyfile
+
+```Caddyfile
+yourdomain.com {
+    handle /api* {
+        reverse_proxy localhost:8090
+    }
+
+    handle /_* {
+        reverse_proxy localhost:8090
+    }
+
+    handle {
+        reverse_proxy localhost:5173
+    }
+
+    encode zstd gzip
+}
+```
