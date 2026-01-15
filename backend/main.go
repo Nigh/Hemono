@@ -2,11 +2,13 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"math/rand"
 	"net/http"
 	"os"
 	"regexp"
+	"sort"
 	"strings"
 	"time"
 
@@ -472,6 +474,240 @@ func main() {
 			return c.JSON(http.StatusOK, map[string]any{
 				"success": true,
 				"message": "邀请码已删除",
+			})
+		})
+
+		// GET /api/ledgers/{ledger_id}/stats - 获取账本统计
+		e.Router.GET("/api/ledgers/{ledger_id}/stats", func(c *core.RequestEvent) error {
+			ledgerId := c.Request.PathValue("ledger_id")
+
+			authRecord := c.Auth
+			if authRecord == nil {
+				return c.JSON(http.StatusUnauthorized, map[string]any{
+					"code":    401,
+					"message": "未认证",
+				})
+			}
+
+			// 验证账本是否存在
+			ledger, err := app.FindRecordById("ledgers", ledgerId)
+			if err != nil {
+				return c.JSON(http.StatusNotFound, map[string]any{
+					"code":    404,
+					"message": "账本不存在",
+				})
+			}
+
+			// 验证权限：账本所有者或成员
+			isOwner := ledger.GetString("owner") == authRecord.Id
+			var memberRecord *core.Record
+			if !isOwner {
+				memberRecord, err = app.FindFirstRecordByFilter(
+					"ledger_members",
+					"ledger = {:ledger} && user = {:user}",
+					map[string]any{"ledger": ledgerId, "user": authRecord.Id},
+				)
+				if err != nil || memberRecord == nil {
+					return c.JSON(http.StatusForbidden, map[string]any{
+						"code":    403,
+						"message": "无权访问该账本",
+					})
+				}
+			}
+
+			// 获取查询参数
+			month := c.Request.URL.Query().Get("month")
+			var dateFilter string
+			if month != "" {
+				// 验证 month 格式: YYYY-MM
+				matched, _ := regexp.MatchString("^\\d{4}-\\d{2}$", month)
+				if !matched {
+					return c.JSON(http.StatusBadRequest, map[string]any{
+						"code":    400,
+						"message": "月份格式不正确，应为 YYYY-MM",
+					})
+				}
+
+				// 解析月份
+				_, err := time.Parse("2006-01", month)
+				if err != nil {
+					return c.JSON(http.StatusBadRequest, map[string]any{
+						"code":    400,
+						"message": "无效的月份",
+					})
+				}
+
+				// 计算下个月
+				parsedTime, _ := time.Parse("2006-01", month)
+				nextMonth := parsedTime.AddDate(0, 1, 0).Format("2006-01")
+				dateFilter = fmt.Sprintf(" && date >= \"%s-01\" && date < \"%s-01\"", month, nextMonth)
+			}
+
+			// 获取账本的所有成员
+			members, err := app.FindRecordsByFilter(
+				"ledger_members",
+				"ledger = {:ledger}",
+				"", // sort
+				0,  // limit
+				0,  // offset
+				map[string]any{"ledger": ledgerId},
+			)
+			if err != nil {
+				return c.JSON(http.StatusInternalServerError, map[string]any{
+					"code":    500,
+					"message": "获取成员失败",
+				})
+			}
+
+			// 构建成员映射
+			memberMap := make(map[string]*struct {
+				userId       string
+				name         string
+				avatar       string
+				totalExpense int
+				totalBenefit int
+			})
+
+			for _, member := range members {
+				userId := member.GetString("user")
+				user, err := app.FindRecordById("users", userId)
+				if err != nil {
+					continue
+				}
+				memberMap[userId] = &struct {
+					userId       string
+					name         string
+					avatar       string
+					totalExpense int
+					totalBenefit int
+				}{
+					userId:       userId,
+					name:         user.GetString("name"),
+					avatar:       user.GetString("avatar"),
+					totalExpense: 0,
+					totalBenefit: 0,
+				}
+			}
+
+			// 获取交易记录
+			transactions, err := app.FindRecordsByFilter(
+				"transactions",
+				fmt.Sprintf("ledger = \"%s\"%s", ledgerId, dateFilter),
+				"",
+				0,
+				0,
+				nil,
+			)
+			if err != nil {
+				return c.JSON(http.StatusInternalServerError, map[string]any{
+					"code":    500,
+					"message": "获取交易失败",
+				})
+			}
+
+			// 计算支出和受益
+			totalExpense := 0
+			totalBenefit := 0
+
+			for _, tx := range transactions {
+				amount := tx.GetInt("amount")
+				payer := tx.GetString("payer")
+				txType := tx.GetString("type")
+				beneficiary := tx.GetString("beneficiary")
+
+				// 支出统计
+				if member, ok := memberMap[payer]; ok {
+					member.totalExpense += amount
+					totalExpense += amount
+				}
+
+				// 受益统计
+				if txType == "AA" {
+					// AA：平均分配给所有成员
+					if len(members) > 0 {
+						benefitPerMember := amount / len(members)
+						for _, member := range members {
+							userId := member.GetString("user")
+							if m, ok := memberMap[userId]; ok {
+								m.totalBenefit += benefitPerMember
+								totalBenefit += benefitPerMember
+							}
+						}
+					}
+				} else if txType == "SINGLE" && beneficiary != "" {
+					// SINGLE：分配给受益人
+					if m, ok := memberMap[beneficiary]; ok {
+						m.totalBenefit += amount
+						totalBenefit += amount
+					}
+				}
+			}
+
+			// 计算结余和百分比
+			type MemberStat struct {
+				UserId       string `json:"userId"`
+				Name         string `json:"name"`
+				Avatar       string `json:"avatar"`
+				TotalExpense int    `json:"totalExpense"`
+				TotalBenefit int    `json:"totalBenefit"`
+				Balance      int    `json:"balance"`
+				Percentage   int    `json:"percentage"`
+			}
+
+			var memberStats []MemberStat
+			maxBalance := 0
+
+			for _, member := range memberMap {
+				balance := member.totalExpense - member.totalBenefit
+				balanceAbs := balance
+				if balanceAbs < 0 {
+					balanceAbs = -balanceAbs
+				}
+				if balanceAbs > maxBalance {
+					maxBalance = balanceAbs
+				}
+
+				stat := MemberStat{
+					UserId:       member.userId,
+					Name:         member.name,
+					Avatar:       member.avatar,
+					TotalExpense: member.totalExpense,
+					TotalBenefit: member.totalBenefit,
+					Balance:      balance,
+				}
+				memberStats = append(memberStats, stat)
+			}
+
+			// 计算百分比
+			for i := range memberStats {
+				balanceAbs := memberStats[i].Balance
+				if balanceAbs < 0 {
+					balanceAbs = -balanceAbs
+				}
+				if maxBalance > 0 {
+					memberStats[i].Percentage = int(float64(balanceAbs) / float64(maxBalance) * 100)
+				} else {
+					memberStats[i].Percentage = 0
+				}
+			}
+
+			// 按结余绝对值降序排列
+			sort.Slice(memberStats, func(i, j int) bool {
+				balanceI := memberStats[i].Balance
+				balanceJ := memberStats[j].Balance
+				if balanceI < 0 {
+					balanceI = -balanceI
+				}
+				if balanceJ < 0 {
+					balanceJ = -balanceJ
+				}
+				return balanceI > balanceJ
+			})
+
+			return c.JSON(http.StatusOK, map[string]any{
+				"totalExpense": totalExpense,
+				"totalBenefit": totalBenefit,
+				"memberStats":  memberStats,
 			})
 		})
 

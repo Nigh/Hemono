@@ -1,5 +1,9 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
 	import { pb } from '$lib/pb';
+	import { fetchLedgerStats } from '$lib/api/stats';
+	import type { LedgerStat } from '$lib/api/stats';
+	import LedgerStats from './LedgerStats.svelte';
 
 	interface Member {
 		id: string;
@@ -19,9 +23,33 @@
 	}
 
 	let { ledger, members, onaddtransaction, ongenerateinvite }: Props = $props();
+
+	let stats: LedgerStat | null = $state(null);
+	let isLoadingStats = $state(false);
+	let statsError: string | null = $state(null);
+
+	export async function loadStats() {
+		isLoadingStats = true;
+		statsError = null;
+		try {
+			stats = await fetchLedgerStats(ledger.id);
+		} catch (error: any) {
+			statsError = error.message || '加载统计失败';
+			console.error('Failed to load stats:', error);
+		} finally {
+			isLoadingStats = false;
+		}
+	}
+
+	onMount(() => {
+		loadStats();
+	});
 </script>
 
 <div class="border-base-300 p-4 space-y-4 border-t">
+	<!-- 统计信息 -->
+	<LedgerStats {stats} isLoading={isLoadingStats} error={statsError} onretry={loadStats} />
+
 	<div class="flex items-center justify-between">
 		<span class="text-sm opacity-60">快速记账</span>
 		<button class="btn btn-primary btn-sm shadow-lg" onclick={onaddtransaction}>
