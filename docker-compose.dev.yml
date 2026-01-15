@@ -4,6 +4,7 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile.dev
+    image: hemono-go:dev
     container_name: hemono-backend-dev
     ports:
       - "8090:8090"
@@ -23,6 +24,7 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
       target: builder # 使用构建阶段，因为该阶段包含了 bun 环境
+    image: hemono-web:dev
     container_name: hemono-frontend-dev
     ports:
       - "5173:5173"
@@ -45,6 +47,11 @@ services:
 
 volumes:
   hemono_pb_data_dev:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${PWD}/pb_data
 
 networks:
   hemono-network:

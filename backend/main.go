@@ -5,6 +5,7 @@ import (
 	"log"
 	"math/rand"
 	"net/http"
+	"os"
 	"regexp"
 	"strings"
 	"time"
@@ -37,6 +38,39 @@ func main() {
 
 	migratecmd.MustRegister(app, app.RootCmd, migratecmd.Config{
 		Dir: "migrations",
+	})
+
+	// 使用 OnBootstrap 钩子，它在应用初始化时（DB 连接后，Server 启动前）执行
+	app.OnBootstrap().BindFunc(func(e *core.BootstrapEvent) error {
+		email := os.Getenv("PB_ADMIN_EMAIL")
+		password := os.Getenv("PB_ADMIN_PASSWORD")
+
+		if email != "" && password != "" {
+			collection, err := app.FindCollectionByNameOrId(core.CollectionNameSuperusers)
+			if err != nil {
+				return err
+			}
+
+			// 检查管理员是否已存在
+			admin, _ := app.FindFirstRecordByData(collection.Id, "email", email)
+
+			if admin == nil {
+				log.Printf("正在初始化超级用户: %s", email)
+
+				// 创建新的超级用户记录
+				newAdmin := core.NewRecord(collection)
+				newAdmin.SetEmail(email)
+				newAdmin.SetPassword(password)
+
+				// 保存记录
+				if err := app.Save(newAdmin); err != nil {
+					log.Printf("超级用户创建失败: %v", err)
+				} else {
+					log.Println("超级用户初始化成功！")
+				}
+			}
+		}
+		return e.Next() // 继续执行初始化链
 	})
 
 	// 添加邀请码API路由

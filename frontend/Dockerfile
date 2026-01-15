@@ -14,23 +14,15 @@ COPY . .
 RUN bun run build
 
 # ===== 阶段 2: 运行时镜像 =====
-# 对于静态站点，建议使用更轻量的镜像或继续使用 bun 运行
 FROM oven/bun:1-alpine AS runner
 
 WORKDIR /app
 
-# SvelteKit 默认构建产物在 .svelte-kit/output 或 build 目录
-# 这里根据您的 package.json 逻辑复制构建出的静态资源
-# COPY --from=builder /app/build ./build
-COPY --from=builder /app/.svelte-kit/output ./output
-COPY --from=builder /app/package.json ./
+# SvelteKit 默认构建产物在 build 目录
+COPY --from=builder /app/build ./build
 
-# 暴露端口（与您的原配置保持一致）
+# 暴露端口
 EXPOSE 5173
 
-# 使用 bun 直接运行服务，或者继续使用 serve 插件
-# 推荐做法：安装一个轻量的静态服务器
-RUN bun add -g serve
-
-# 启动服务
-CMD ["serve", "-s", "output", "-l", "5173"]
+ENV PORT=5173
+CMD ["bun", "./build/index.js"]

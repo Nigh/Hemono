@@ -4,6 +4,7 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
+    image: hemono-go:prod
     container_name: hemono-backend
     environment:
       PB_DATA_DIR: /pb_data
@@ -13,8 +14,10 @@ services:
     restart: unless-stopped
     networks:
       - hemono-network
-    expose:
-      - "8090"
+    ports:
+      - "8090:8090"
+    # expose:
+    #   - "8090"
     healthcheck:
       test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8090/api/health"]
       interval: 30s
@@ -26,16 +29,23 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+    image: hemono-web:prod
     container_name: hemono-frontend
     restart: unless-stopped
     networks:
       - hemono-network
-    expose:
-      - "5173"
+    ports:
+      - "5173:5173"
+    # expose:
+    #   - "5173"
 
 volumes:
   hemono_pb_data:
     driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${PWD}/pb_data
 
 networks:
   hemono-network:
