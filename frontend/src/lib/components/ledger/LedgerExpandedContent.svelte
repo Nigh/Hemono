@@ -77,7 +77,7 @@
 							<img
 								src={member.avatar
 									? pb.files.getURL(member, member.avatar)
-									: `https://api.dicebear.com/7.x/bottts/svg?seed=${member.id}`}
+									: `https://api.dicebear.com/9.x/pixel-art/svg?seed=${member.id}`}
 								alt="avatar"
 							/>
 						</div>
