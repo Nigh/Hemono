@@ -29,11 +29,11 @@ Example Caddyfile
 
 ```Caddyfile
 yourdomain.com {
-    handle /api* {
+    handle /api/* {
         reverse_proxy localhost:8090
     }
 
-    handle /_* {
+    handle /_/* {
         reverse_proxy localhost:8090
     }
 
