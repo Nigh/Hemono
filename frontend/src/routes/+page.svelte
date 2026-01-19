@@ -102,6 +102,7 @@
 					<LedgerExpandedContent
 						{ledger}
 						{members}
+						isOwner={$currentUser?.id === ledger.owner}
 						onaddtransaction={openAddTransactionModal}
 						ongenerateinvite={() => openGenerateInviteModal(ledger.id)}
 					/>
@@ -143,6 +144,7 @@
 	<GenerateInviteModal
 		ledgerId={ledger.id}
 		ledgerName={ledger.name}
+		isOwner={$currentUser?.id === ledger.owner}
 		on:register={handleRegisterInviteModal}
 	/>
 {/each}
