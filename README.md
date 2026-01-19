@@ -11,15 +11,25 @@ cp .env.example .env
 vim .env
 ```
 
-## Start
+## Develop
 
-### Develop
-
+### Docker up
+In the dev container, the backend uses Air to automatically monitor changes in Go code, while the frontend relies on Vite's HMR functionality.
 ```sh
 docker compose -f docker-compose.dev.yml up -d
 ```
 
-### Production
+### Migrate database
+
+If you change the database configuration, you will need to create a database migration. For details, refer to https://pocketbase.io/docs/go-migrations
+```sh
+go run . migrate collections
+go run . migrate history-sync
+```
+
+## Deploy
+
+### Docker up
 ```sh
 docker compose -f docker-compose.yml up -d
 ```
