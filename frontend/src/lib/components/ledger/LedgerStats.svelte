@@ -98,7 +98,7 @@
 							</div>
 						</div>
 						<div class="flex flex-1 flex-col">
-							<div class="font-medium">{member.name}</div>
+							<div class="font-medium">{member.name || member.email}</div>
 							<div class="text-xs opacity-60">
 								支出: ¥{formatAmount(member.totalExpense)} | 受益: ¥{formatAmount(
 									member.totalBenefit

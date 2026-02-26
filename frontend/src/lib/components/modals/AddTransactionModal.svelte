@@ -125,18 +125,20 @@
 
 			{#if splitType === 'SINGLE'}
 				<div class="bg-base-200 border-primary/10 rounded-xl p-3 border">
-					<label class="label pt-0"><span class="label-text-alt font-bold">由谁承担？</span></label>
-					<select
-						class="select select-sm select-ghost w-full"
-						bind:value={beneficiary}
-						disabled={isSuccess}
+					<label class="label pt-0"
+						><span class="label-text-alt font-bold">由谁承担？</span>
+						<select
+							class="select select-sm select-ghost w-full"
+							bind:value={beneficiary}
+							disabled={isSuccess}
+						>
+							{#each members as m}
+								<option value={m.id}
+									>{m.id === $currentUser.id ? '[自己]' : ''} {m.name || m.email} ({m.email})
+								</option>
+							{/each}
+						</select></label
 					>
-						{#each members as m}
-							<option value={m.id}
-								>{m.name || m.email} {m.id === $currentUser.id ? '(自己)' : ''}</option
-							>
-						{/each}
-					</select>
 				</div>
 			{/if}
 
