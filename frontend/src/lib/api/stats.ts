@@ -3,6 +3,7 @@ import { pb } from '$lib/pb';
 export interface MemberStat {
 	userId: string;
 	name: string;
+	email: string;
 	avatar: string;
 	totalExpense: number; // 分
 	totalBenefit: number; // 分

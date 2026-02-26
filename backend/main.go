@@ -563,6 +563,7 @@ func main() {
 			memberMap := make(map[string]*struct {
 				userId       string
 				name         string
+				email        string
 				avatar       string
 				totalExpense int
 				totalBenefit int
@@ -577,12 +578,14 @@ func main() {
 				memberMap[userId] = &struct {
 					userId       string
 					name         string
+					email        string
 					avatar       string
 					totalExpense int
 					totalBenefit int
 				}{
 					userId:       userId,
 					name:         user.GetString("name"),
+					email:        user.GetString("email"),
 					avatar:       user.GetString("avatar"),
 					totalExpense: 0,
 					totalBenefit: 0,
@@ -647,6 +650,7 @@ func main() {
 			type MemberStat struct {
 				UserId       string `json:"userId"`
 				Name         string `json:"name"`
+				Email        string `json:"email"`
 				Avatar       string `json:"avatar"`
 				TotalExpense int    `json:"totalExpense"`
 				TotalBenefit int    `json:"totalBenefit"`
@@ -670,6 +674,7 @@ func main() {
 				stat := MemberStat{
 					UserId:       member.userId,
 					Name:         member.name,
+					Email:        member.email,
 					Avatar:       member.avatar,
 					TotalExpense: member.totalExpense,
 					TotalBenefit: member.totalBenefit,
