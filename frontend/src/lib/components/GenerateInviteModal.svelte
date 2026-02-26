@@ -6,6 +6,7 @@
 	// Props
 	export let ledgerId: string;
 	export let ledgerName: string;
+	export let isOwner = false;
 
 	const dispatch = createEventDispatcher();
 
@@ -88,7 +89,9 @@
 			dialogElement.showModal();
 		}
 		// 先显示模态框，同时在后台静默刷新/加载数据
-		checkExistingInvitation();
+		if (isOwner) {
+			checkExistingInvitation();
+		}
 	}
 
 	// 对外暴露的重置方法
@@ -241,7 +244,35 @@
 			</button>
 		</div>
 
-		{#if isLoading && !generatedCode}
+		{#if !isOwner}
+			<div class="py-12 space-y-4 text-center">
+				<div class="flex justify-center">
+					<div class="bg-error/10 p-4 rounded-full">
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							class="h-12 w-12 text-error"
+							fill="none"
+							viewBox="0 0 24 24"
+							stroke="currentColor"
+						>
+							<path
+								stroke-linecap="round"
+								stroke-linejoin="round"
+								stroke-width="2"
+								d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+							/>
+						</svg>
+					</div>
+				</div>
+				<div class="space-y-1">
+					<h4 class="text-xl font-bold">权限不足</h4>
+					<p class="text-base-content/60">只有账本的所有者可以生成邀请码。</p>
+				</div>
+				<div class="pt-4">
+					<button class="btn btn-primary" onclick={handleClose}>返回</button>
+				</div>
+			</div>
+		{:else if isLoading && !generatedCode}
 			<div class="py-8 flex justify-center">
 				<span class="loading loading-spinner loading-lg"></span>
 			</div>
