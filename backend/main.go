@@ -628,12 +628,22 @@ func main() {
 				if txType == "AA" {
 					// AA：平均分配给所有成员
 					if len(members) > 0 {
-						benefitPerMember := amount / len(members)
-						for _, member := range members {
+						base := amount / len(members)
+						remainder := amount % len(members)
+
+						sort.Slice(members, func(i, j int) bool {
+							return members[i].GetString("user") < members[j].GetString("user")
+						})
+
+						for i, member := range members {
 							userId := member.GetString("user")
+							benefit := base
+							if i < remainder {
+								benefit += 1
+							}
 							if m, ok := memberMap[userId]; ok {
-								m.totalBenefit += benefitPerMember
-								totalBenefit += benefitPerMember
+								m.totalBenefit += benefit
+								totalBenefit += benefit
 							}
 						}
 					}
