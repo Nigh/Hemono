@@ -63,14 +63,18 @@
 {:else if stats}
 	<div class="gap-4 flex flex-col">
 		<!-- 统计摘要 -->
-		<div class="gap-4 flex">
-			<div class="rounded-lg bg-base-200 p-4 flex-1">
+		<div class="grid gap-4 sm:grid-cols-3">
+			<div class="rounded-lg bg-base-200 p-4">
 				<div class="text-xs font-medium opacity-60">总支出</div>
 				<div class="text-xl font-bold">¥{formatAmount(stats.totalExpense)}</div>
 			</div>
-			<div class="rounded-lg bg-base-200 p-4 flex-1">
-				<div class="text-xs font-medium opacity-60">总受益</div>
-				<div class="text-xl font-bold">¥{formatAmount(stats.totalBenefit)}</div>
+			<div class="rounded-lg bg-base-200 p-4">
+				<div class="text-xs font-medium opacity-60">月支出</div>
+				<div class="text-xl font-bold">¥{formatAmount(stats.monthlyExpense)}</div>
+			</div>
+			<div class="rounded-lg bg-base-200 p-4">
+				<div class="text-xs font-medium opacity-60">7天支出</div>
+				<div class="text-xl font-bold">¥{formatAmount(stats.last7DaysExpense)}</div>
 			</div>
 		</div>
 

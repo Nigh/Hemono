@@ -14,6 +14,8 @@ export interface MemberStat {
 export interface LedgerStat {
 	totalExpense: number; // 分
 	totalBenefit: number; // 分
+	monthlyExpense: number; // 分
+	last7DaysExpense: number; // 分
 	memberStats: MemberStat[];
 }
 

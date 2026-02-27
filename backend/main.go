@@ -611,17 +611,33 @@ func main() {
 			// 计算支出和受益
 			totalExpense := 0
 			totalBenefit := 0
+			monthlyExpense := 0
+			last7DaysExpense := 0
+
+			now := time.Now()
+			monthStart := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location())
+			nextMonthStart := monthStart.AddDate(0, 1, 0)
+			last7DaysStart := now.AddDate(0, 0, -6)
 
 			for _, tx := range transactions {
 				amount := tx.GetInt("amount")
 				payer := tx.GetString("payer")
 				txType := tx.GetString("type")
 				beneficiary := tx.GetString("beneficiary")
+				txDate := tx.GetDateTime("date").Time()
 
 				// 支出统计
 				if member, ok := memberMap[payer]; ok {
 					member.totalExpense += amount
 					totalExpense += amount
+
+					if !txDate.Before(monthStart) && txDate.Before(nextMonthStart) {
+						monthlyExpense += amount
+					}
+
+					if !txDate.Before(last7DaysStart) && !txDate.After(now) {
+						last7DaysExpense += amount
+					}
 				}
 
 				// 受益统计
@@ -720,9 +736,11 @@ func main() {
 			})
 
 			return c.JSON(http.StatusOK, map[string]any{
-				"totalExpense": totalExpense,
-				"totalBenefit": totalBenefit,
-				"memberStats":  memberStats,
+				"totalExpense":     totalExpense,
+				"totalBenefit":     totalBenefit,
+				"monthlyExpense":   monthlyExpense,
+				"last7DaysExpense": last7DaysExpense,
+				"memberStats":      memberStats,
 			})
 		})
 
