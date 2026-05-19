@@ -29,7 +29,7 @@
 
 	$effect(() => {
 		if (members.length > 0 && !beneficiary && $currentUser) {
-			beneficiary = $currentUser.id;
+			beneficiary = $currentUser!.id;
 		}
 	});
 
@@ -72,7 +72,7 @@
 			const parsedAmount = parseFloat(amount).toFixed(2);
 			await addTransaction({
 				ledger: ledgerId,
-				payer: $currentUser.id,
+				payer: $currentUser!.id,
 				amount: Math.round(Number(parsedAmount) * 100),
 				type: splitType,
 				beneficiary: splitType === 'SINGLE' ? beneficiary : null,
@@ -134,7 +134,7 @@
 						>
 							{#each members as m}
 								<option value={m.id}
-									>{m.id === $currentUser.id ? '[自己]' : ''} {m.name || m.email} ({m.email})
+									>{m.id === $currentUser!.id ? '[自己]' : ''} {m.name || m.email} ({m.email})
 								</option>
 							{/each}
 						</select></label

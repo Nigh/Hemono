@@ -43,7 +43,7 @@ func main() {
 	})
 
 	// 使用 OnBootstrap 钩子，它在应用初始化时（DB 连接后，Server 启动前）执行
-	app.OnBootstrap().BindFunc(func(e *core.BootstrapEvent) error {
+	app.OnServe().BindFunc(func(e *core.ServeEvent) error {
 		email := os.Getenv("PB_ADMIN_EMAIL")
 		password := os.Getenv("PB_ADMIN_PASSWORD")
 

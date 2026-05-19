@@ -10,6 +10,8 @@ services:
       - "8090:8090"
     environment:
       PB_DATA_DIR: /pb_data
+      PB_ADMIN_EMAIL: ${PB_ADMIN_EMAIL}
+      PB_ADMIN_PASSWORD: ${PB_ADMIN_PASSWORD}
       TZ: Asia/Shanghai
     volumes:
       - hemono_pb_data_dev:/pb_data 

@@ -52,7 +52,7 @@
 			return;
 		}
 		try {
-			const ledger = await createLedger(newLedgerName, $currentUser.id);
+			const ledger = await createLedger(newLedgerName, $currentUser!.id);
 			newLedgerName = '';
 			showOperationMessage({ type: 'success', text: '账本创建成功' }, 1500, () => {
 				(window as any).create_ledger_modal.close();
