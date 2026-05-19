@@ -17,7 +17,7 @@ export async function fetchLedgerMembers(ledgerId: string) {
 		filter: `ledger = "${ledgerId}"`,
 		expand: 'user'
 	});
-	return res.map((m) => m.expand!.user);
+	return res.filter((m) => m.expand?.user).map((m) => m.expand!.user);
 }
 
 export interface TransactionData {
@@ -42,9 +42,6 @@ export async function fetchTransactions(ledgerId: string) {
 	});
 }
 
-export async function updateTransaction(id: string, data: Partial<TransactionData>) {
-	return await pb.collection('transactions').update(id, data);
-}
 
 
 export async function deleteTransaction(id: string) {

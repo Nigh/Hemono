@@ -10,7 +10,7 @@
 	import MembersDrawer from '$lib/components/MembersDrawer.svelte';
 	import TransactionCard from '$lib/components/TransactionCard.svelte';
 
-	let ledgerId = $derived($page.params.id as string);
+	let ledgerId = $derived($page.params.id ?? '');
 	let ledger: any = $state(null);
 	let members: any[] = $state([]);
 	let transactions: any[] = $state([]);

@@ -47,12 +47,16 @@
 	}
 
 	async function handleCreateLedger() {
+		if (!$currentUser) {
+			showOperationMessage({ type: 'error', text: '请先登录' }, 3000);
+			return;
+		}
 		if (!newLedgerName) {
 			showOperationMessage({ type: 'warning', text: '请输入账本名称' }, 3000);
 			return;
 		}
 		try {
-			const ledger = await createLedger(newLedgerName, $currentUser!.id);
+			const ledger = await createLedger(newLedgerName, $currentUser.id);
 			newLedgerName = '';
 			showOperationMessage({ type: 'success', text: '账本创建成功' }, 1500, () => {
 				(window as any).create_ledger_modal.close();

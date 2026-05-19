@@ -1,8 +1,17 @@
 <script lang="ts">
 	import { pb } from '$lib/pb';
 
+	interface Transaction {
+		id: string;
+		amount: number;
+		type: string;
+		note?: string;
+		date: string;
+		expand?: { payer?: { id: string; name?: string; email: string; avatar?: string } };
+	}
+
 	interface Props {
-		transaction: any;
+		transaction: Transaction;
 		ondelete?: (id: string) => void;
 	}
 
@@ -13,7 +22,9 @@
 	const dateStr = $derived(new Date(transaction.date).toLocaleDateString('zh-CN'));
 
 	function handleDelete() {
-		ondelete?.(transaction.id);
+		if (confirm("确定要删除这笔记录吗？")) {
+			ondelete?.(transaction.id);
+		}
 	}
 </script>
 

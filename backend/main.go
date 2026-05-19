@@ -118,17 +118,11 @@ func main() {
 				})
 			}
 
-			// 清理已过期或已用完的邀请码
 			expiresAt := foundRecord.GetDateTime("expires_at").Time()
-			if time.Now().After(expiresAt) || foundRecord.GetInt("used_count") >= foundRecord.GetInt("max_uses") {
-				app.Delete(foundRecord)
-				return c.JSON(http.StatusOK, map[string]any{
-					"exists": false,
-				})
-			}
+			isExpired := time.Now().After(expiresAt) || foundRecord.GetInt("used_count") >= foundRecord.GetInt("max_uses")
 
 			return c.JSON(http.StatusOK, map[string]any{
-				"exists":    true,
+				"exists":    !isExpired,
 				"id":        foundRecord.Id,
 				"code":      foundRecord.GetString("code"),
 				"expiresAt": expiresAt.Format("2006-01-02 15:04"),
@@ -390,36 +384,43 @@ func main() {
 				})
 			}
 
-			// 写入成员并更新计数（推荐在事务中执行，这里简化处理）
-			memberCollection, _ := app.FindCollectionByNameOrId("ledger_members")
-			newMember := core.NewRecord(memberCollection)
-			newMember.Set("ledger", ledgerId)
-			newMember.Set("user", authRecord.Id)
-			newMember.Set("role", "member")
+			var ledgerName string
+			err = app.RunInTransaction(func(txApp core.App) error {
+				memberCollection, err := txApp.FindCollectionByNameOrId("ledger_members")
+				if err != nil {
+					return err
+				}
+				newMember := core.NewRecord(memberCollection)
+				newMember.Set("ledger", ledgerId)
+				newMember.Set("user", authRecord.Id)
+				newMember.Set("role", "member")
+				if err := txApp.Save(newMember); err != nil {
+					return err
+				}
 
-			if err := app.Save(newMember); err != nil {
+				newUsedCount := foundRecord.GetInt("used_count") + 1
+				foundRecord.Set("used_count", newUsedCount)
+				if newUsedCount >= foundRecord.GetInt("max_uses") {
+					return txApp.Delete(foundRecord)
+				}
+				return txApp.Save(foundRecord)
+			})
+			if err != nil {
 				return c.JSON(http.StatusInternalServerError, map[string]any{
 					"code":    500,
 					"message": "加入账本失败",
 				})
 			}
 
-			newUsedCount := foundRecord.GetInt("used_count") + 1
-			foundRecord.Set("used_count", newUsedCount)
-
-			// 检查是否已用完，如果是则删除邀请码
-			if newUsedCount >= foundRecord.GetInt("max_uses") {
-				app.Delete(foundRecord)
-			} else {
-				app.Save(foundRecord)
-			}
-
 			ledger, _ := app.FindRecordById("ledgers", ledgerId)
+			if ledger != nil {
+				ledgerName = ledger.GetString("name")
+			}
 
 			return c.JSON(http.StatusOK, map[string]any{
 				"success":    true,
 				"ledgerId":   ledgerId,
-				"ledgerName": ledger.GetString("name"),
+				"ledgerName": ledgerName,
 				"message":    "成功加入账本",
 			})
 		})

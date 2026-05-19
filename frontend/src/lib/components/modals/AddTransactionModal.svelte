@@ -29,7 +29,7 @@
 
 	$effect(() => {
 		if (members.length > 0 && !beneficiary && $currentUser) {
-			beneficiary = $currentUser!.id;
+			beneficiary = $currentUser.id;
 		}
 	});
 
@@ -64,6 +64,10 @@
 	}
 
 	async function handleAddTransaction() {
+		if (!$currentUser) {
+			showOperationMessage({ type: 'error', text: '请先登录' }, 3000);
+			return;
+		}
 		if (!amount) {
 			showOperationMessage({ type: 'warning', text: '请输入金额' }, 3000);
 			return;
@@ -72,7 +76,7 @@
 			const parsedAmount = parseFloat(amount).toFixed(2);
 			await addTransaction({
 				ledger: ledgerId,
-				payer: $currentUser!.id,
+				payer: $currentUser.id,
 				amount: Math.round(Number(parsedAmount) * 100),
 				type: splitType,
 				beneficiary: splitType === 'SINGLE' ? beneficiary : null,
@@ -134,7 +138,7 @@
 						>
 							{#each members as m}
 								<option value={m.id}
-									>{m.id === $currentUser!.id ? '[自己]' : ''} {m.name || m.email} ({m.email})
+									>{m.id === $currentUser?.id ? '[自己]' : ''} {m.name || m.email} ({m.email})
 								</option>
 							{/each}
 						</select></label
