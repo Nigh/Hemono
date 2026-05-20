@@ -5,6 +5,7 @@
 		id: string;
 		amount: number;
 		type: string;
+		direction?: string;
 		note?: string;
 		date: string;
 		expand?: { payer?: { id: string; name?: string; email: string; avatar?: string } };
@@ -20,18 +21,20 @@
 	const payer = $derived(transaction.expand?.payer);
 	const amountYuan = $derived((transaction.amount / 100).toFixed(2));
 	const dateStr = $derived(new Date(transaction.date).toLocaleDateString('zh-CN'));
+	const isIncome = $derived(transaction.direction === 'INCOME');
+	const canDelete = $derived(payer?.id === pb.authStore.record?.id);
 
 	function handleDelete() {
-		if (confirm("确定要删除这笔记录吗？")) {
+		if (confirm('确定要删除这笔记录吗？')) {
 			ondelete?.(transaction.id);
 		}
 	}
 </script>
 
-<div class="card border border-base-300 bg-base-100">
+<div class="card border-base-300 bg-base-100 border">
 	<div class="card-body p-3 gap-2">
 		<div class="flex items-center justify-between">
-			<div class="flex items-center gap-2 min-w-0">
+			<div class="gap-2 min-w-0 flex items-center">
 				{#if payer}
 					<div class="avatar">
 						<div class="w-6 h-6 rounded-full">
@@ -46,13 +49,20 @@
 					<span class="text-sm truncate">{payer.name || payer.email}</span>
 				{/if}
 				{#if transaction.note}
-					<span class="text-xs opacity-40 truncate">· {transaction.note}</span>
+					<span class="text-xs truncate opacity-40">· {transaction.note}</span>
 				{/if}
 			</div>
 
-			<div class="flex items-center gap-2">
-				<span class="text-base font-bold tabular-nums">¥{amountYuan}</span>
-				<button class="btn btn-ghost btn-xs btn-circle text-error" onclick={handleDelete} title="删除">
+			<div class="gap-2 flex items-center">
+				<span class="text-base font-bold tabular-nums {isIncome ? 'text-success' : 'text-error'}">
+					{isIncome ? '+' : '-'}¥{amountYuan}
+				</span>
+			{#if canDelete}
+				<button
+					class="btn btn-ghost btn-xs btn-circle text-error"
+					onclick={handleDelete}
+					title="删除"
+				>
 					<svg
 						xmlns="http://www.w3.org/2000/svg"
 						class="h-4 w-4"
@@ -68,11 +78,15 @@
 						/>
 					</svg>
 				</button>
+			{/if}
 			</div>
 		</div>
 
-		<div class="flex items-center gap-2 text-xs opacity-40">
+		<div class="gap-2 text-xs flex items-center opacity-40">
 			<span>{dateStr}</span>
+			<span class="badge badge-xs {isIncome ? 'badge-success' : 'badge-error'}">
+				{isIncome ? '收入' : '支出'}
+			</span>
 			<span class="badge badge-xs">{transaction.type === 'AA' ? 'AA均摊' : '单人承担'}</span>
 		</div>
 	</div>

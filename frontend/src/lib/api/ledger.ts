@@ -25,6 +25,7 @@ export interface TransactionData {
 	payer: string;
 	amount: number;
 	type: string;
+	direction: string;
 	beneficiary: string | null;
 	note: string;
 	date: Date;
@@ -41,8 +42,6 @@ export async function fetchTransactions(ledgerId: string) {
 		sort: '-date,-created'
 	});
 }
-
-
 
 export async function deleteTransaction(id: string) {
 	return await pb.collection('transactions').delete(id);

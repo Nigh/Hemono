@@ -63,18 +63,22 @@
 {:else if stats}
 	<div class="gap-4 flex flex-col">
 		<!-- 统计摘要 -->
-		<div class="grid gap-4 sm:grid-cols-3">
+		<div class="gap-4 sm:grid-cols-2 grid">
 			<div class="rounded-lg bg-base-200 p-4">
 				<div class="text-xs font-medium opacity-60">总支出</div>
-				<div class="text-xl font-bold">¥{formatAmount(stats.totalExpense)}</div>
+				<div class="text-xl font-bold text-error">¥{formatAmount(stats.totalExpense)}</div>
+			</div>
+			<div class="rounded-lg bg-base-200 p-4">
+				<div class="text-xs font-medium opacity-60">总收入</div>
+				<div class="text-xl font-bold text-success">¥{formatAmount(stats.totalIncome)}</div>
 			</div>
 			<div class="rounded-lg bg-base-200 p-4">
 				<div class="text-xs font-medium opacity-60">月支出</div>
-				<div class="text-xl font-bold">¥{formatAmount(stats.monthlyExpense)}</div>
+				<div class="text-xl font-bold text-error">¥{formatAmount(stats.monthlyExpense)}</div>
 			</div>
 			<div class="rounded-lg bg-base-200 p-4">
-				<div class="text-xs font-medium opacity-60">7天支出</div>
-				<div class="text-xl font-bold">¥{formatAmount(stats.last7DaysExpense)}</div>
+				<div class="text-xs font-medium opacity-60">月收入</div>
+				<div class="text-xl font-bold text-success">¥{formatAmount(stats.monthlyIncome)}</div>
 			</div>
 		</div>
 
@@ -104,9 +108,10 @@
 						<div class="flex flex-1 flex-col">
 							<div class="font-medium">{member.name || member.email}</div>
 							<div class="text-xs opacity-60">
-								支出: ¥{formatAmount(member.totalExpense)} | 受益: ¥{formatAmount(
-									member.totalBenefit
-								)}
+								支出: ¥{formatAmount(member.totalExpense)}
+								{#if member.totalIncome > 0}
+									| 收入: ¥{formatAmount(member.totalIncome)}
+								{/if}
 							</div>
 						</div>
 						<div class="text-right">

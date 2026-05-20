@@ -49,7 +49,6 @@
 			toasts.error(`删除失败: ${err.message}`);
 		}
 	}
-
 </script>
 
 <div class="space-y-4">
@@ -62,12 +61,7 @@
 				viewBox="0 0 24 24"
 				stroke="currentColor"
 			>
-				<path
-					stroke-linecap="round"
-					stroke-linejoin="round"
-					stroke-width="2"
-					d="M15 19l-7-7 7-7"
-				/>
+				<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
 			</svg>
 			返回
 		</a>
@@ -98,7 +92,7 @@
 	</div>
 
 	{#if isLoading}
-		<div class="flex justify-center py-20">
+		<div class="py-20 flex justify-center">
 			<span class="loading loading-spinner loading-md"></span>
 		</div>
 	{:else if error}
@@ -106,7 +100,7 @@
 			<span>{error}</span>
 		</div>
 	{:else if ledger}
-		<div class="card border border-base-300 bg-base-100">
+		<div class="card border-base-300 bg-base-100 border">
 			<div class="card-body p-4">
 				<h2 class="card-title text-lg">{ledger.name}</h2>
 				<p class="text-base-content/60 text-xs tracking-widest uppercase">{ledgerId}</p>

@@ -53,9 +53,7 @@
 
 	<a href="/ledger/{ledger.id}" class="flex items-center justify-between">
 		<span class="text-sm opacity-60">账本明细</span>
-		<span class="btn btn-ghost btn-sm">
-			查看 →
-		</span>
+		<span class="btn btn-ghost btn-sm"> 查看 → </span>
 	</a>
 
 	<div class="flex items-center justify-between">
