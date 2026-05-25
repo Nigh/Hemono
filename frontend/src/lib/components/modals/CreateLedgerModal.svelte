@@ -47,6 +47,10 @@
 	}
 
 	async function handleCreateLedger() {
+		if (!$currentUser) {
+			showOperationMessage({ type: 'error', text: '请先登录' }, 3000);
+			return;
+		}
 		if (!newLedgerName) {
 			showOperationMessage({ type: 'warning', text: '请输入账本名称' }, 3000);
 			return;
