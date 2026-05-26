@@ -15,7 +15,8 @@ export async function fetchLedger(id: string) {
 export async function fetchLedgerMembers(ledgerId: string) {
 	const res = await pb.collection('ledger_members').getFullList({
 		filter: `ledger = "${ledgerId}"`,
-		expand: 'user'
+		expand: 'user',
+		requestKey: null
 	});
 	return res.filter((m) => m.expand?.user).map((m) => m.expand!.user);
 }

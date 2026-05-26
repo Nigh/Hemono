@@ -32,7 +32,8 @@ export async function fetchLedgerStats(ledgerId: string, month?: string): Promis
 	}
 
 	const response = await pb.send(url, {
-		method: 'GET'
+		method: 'GET',
+		requestKey: null
 	});
 
 	return response as LedgerStat;

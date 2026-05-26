@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
+	import { onMount, onDestroy } from 'svelte';
 	import { pb } from '$lib/pb';
 	import { fetchLedgerStats } from '$lib/api/stats';
 	import type { LedgerStat } from '$lib/api/stats';
@@ -21,29 +21,52 @@
 		isOwner?: boolean;
 		onaddtransaction?: () => void;
 		ongenerateinvite?: () => void;
+		statsRefreshCounter?: number;
 	}
 
-	let { ledger, members, isOwner = false, onaddtransaction, ongenerateinvite }: Props = $props();
+	let {
+		ledger,
+		members,
+		isOwner = false,
+		onaddtransaction,
+		ongenerateinvite,
+		statsRefreshCounter = 0
+	}: Props = $props();
 
 	let stats: LedgerStat | null = $state(null);
 	let isLoadingStats = $state(false);
 	let statsError: string | null = $state(null);
+	let mounted = $state(true);
+
+	onDestroy(() => {
+		mounted = false;
+	});
 
 	export async function loadStats() {
 		isLoadingStats = true;
 		statsError = null;
 		try {
-			stats = await fetchLedgerStats(ledger.id);
+			const result = await fetchLedgerStats(ledger.id);
+			if (mounted) stats = result;
 		} catch (error: any) {
+			if (!mounted) return;
 			statsError = error.message || '加载统计失败';
 			console.error('Failed to load stats:', error);
 		} finally {
-			isLoadingStats = false;
+			if (mounted) {
+				isLoadingStats = false;
+			}
 		}
 	}
 
 	onMount(() => {
 		loadStats();
+	});
+
+	$effect(() => {
+		if (statsRefreshCounter > 0) {
+			loadStats();
+		}
 	});
 </script>
 
