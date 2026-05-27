@@ -7,9 +7,10 @@
 		isLoading: boolean;
 		error: string | null;
 		onretry?: () => void;
+		ownerId?: string;
 	}
 
-	let { stats, isLoading, error, onretry }: Props = $props();
+	let { stats, isLoading, error, onretry, ownerId }: Props = $props();
 
 	function formatAmount(cents: number): string {
 		return (cents / 100).toFixed(2);
@@ -89,7 +90,11 @@
 				{#each stats.memberStats as member}
 					<div class="gap-3 rounded-lg bg-base-100 p-3 flex items-center">
 						<div class="avatar">
-							<div class="w-10 h-10 border-primary rounded-full border-2">
+							<div
+								class="w-10 h-10 rounded-full {member.userId === ownerId
+									? 'ring-warning ring-offset-base-100 ring-2 ring-offset-1'
+									: 'border-primary border-2'}"
+							>
 								<img
 									src={member.avatar
 										? pb.files.getURL(
@@ -104,6 +109,20 @@
 									alt="avatar"
 								/>
 							</div>
+							{#if member.userId === ownerId}
+								<div
+									class="-top-0.5 -right-0.5 bg-base-100 shadow-sm absolute z-10 rounded-full p-px"
+								>
+									<svg
+										xmlns="http://www.w3.org/2000/svg"
+										viewBox="0 0 24 24"
+										fill="currentColor"
+										class="w-4 h-4 text-warning drop-shadow"
+									>
+										<path d="M2.5 18.5l2-10 5 4 2.5-6 2.5 6 5-4 2 10z" />
+									</svg>
+								</div>
+							{/if}
 						</div>
 						<div class="flex flex-1 flex-col">
 							<div class="font-medium">{member.name || member.email}</div>

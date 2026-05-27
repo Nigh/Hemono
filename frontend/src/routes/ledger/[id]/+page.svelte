@@ -119,4 +119,9 @@
 	{/if}
 </div>
 
-<MembersDrawer {members} open={drawerOpen} onclose={() => (drawerOpen = false)} />
+<MembersDrawer
+	{members}
+	open={drawerOpen}
+	onclose={() => (drawerOpen = false)}
+	ownerId={ledger?.owner}
+/>

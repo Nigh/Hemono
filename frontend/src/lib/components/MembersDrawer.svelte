@@ -12,9 +12,10 @@
 		members: Member[];
 		open: boolean;
 		onclose: () => void;
+		ownerId?: string;
 	}
 
-	let { members, open, onclose }: Props = $props();
+	let { members, open, onclose, ownerId }: Props = $props();
 </script>
 
 <div class="inset-0 fixed z-50 {open ? 'pointer-events-auto' : 'pointer-events-none'}">
@@ -55,7 +56,11 @@
 				<li>
 					<div class="gap-3 flex items-center">
 						<div class="avatar">
-							<div class="w-8 h-8 rounded-full">
+							<div
+								class="w-8 h-8 rounded-full {member.id === ownerId
+									? 'ring-warning ring-offset-base-100 ring-2 ring-offset-1'
+									: ''}"
+							>
 								<img
 									src={member.avatar
 										? pb.files.getURL(member, member.avatar)
@@ -63,6 +68,20 @@
 									alt="avatar"
 								/>
 							</div>
+							{#if member.id === ownerId}
+								<div
+									class="-top-0.5 -right-0.5 bg-base-100 shadow-sm absolute z-10 rounded-full p-px"
+								>
+									<svg
+										xmlns="http://www.w3.org/2000/svg"
+										viewBox="0 0 24 24"
+										fill="currentColor"
+										class="w-3.5 h-3.5 text-warning drop-shadow"
+									>
+										<path d="M2.5 18.5l2-10 5 4 2.5-6 2.5 6 5-4 2 10z" />
+									</svg>
+								</div>
+							{/if}
 						</div>
 						<div class="min-w-0 flex-1">
 							<p class="font-medium truncate">{member.name || member.email}</p>

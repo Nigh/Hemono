@@ -16,6 +16,7 @@
 		ledger: {
 			id: string;
 			name: string;
+			owner: string;
 		};
 		members: Member[];
 		isOwner?: boolean;
@@ -72,7 +73,13 @@
 
 <div class="border-base-300 p-4 space-y-4 border-t">
 	<!-- 统计信息 -->
-	<LedgerStats {stats} isLoading={isLoadingStats} error={statsError} onretry={loadStats} />
+	<LedgerStats
+		{stats}
+		isLoading={isLoadingStats}
+		error={statsError}
+		onretry={loadStats}
+		ownerId={ledger.owner}
+	/>
 
 	<a href="/ledger/{ledger.id}" class="flex items-center justify-between">
 		<span class="text-sm opacity-60">账本明细</span>
@@ -103,7 +110,11 @@
 				<div class="avatar-group -space-x-4">
 					{#each members as member}
 						<div class="avatar">
-							<div class="w-8 h-8 border-primary rounded-full border-2">
+							<div
+								class="w-8 h-8 rounded-full {member.id === ledger.owner
+									? 'ring-warning ring-offset-base-100 ring-2 ring-offset-1'
+									: 'border-primary border-2'}"
+							>
 								<img
 									src={member.avatar
 										? pb.files.getURL(member, member.avatar)
@@ -111,6 +122,20 @@
 									alt="avatar"
 								/>
 							</div>
+							{#if member.id === ledger.owner}
+								<div
+									class="-top-0.5 -right-0.5 bg-base-100 shadow-sm absolute z-20 rounded-full p-px"
+								>
+									<svg
+										xmlns="http://www.w3.org/2000/svg"
+										viewBox="0 0 24 24"
+										fill="currentColor"
+										class="w-3.5 h-3.5 text-warning drop-shadow"
+									>
+										<path d="M2.5 18.5l2-10 5 4 2.5-6 2.5 6 5-4 2 10z" />
+									</svg>
+								</div>
+							{/if}
 						</div>
 					{/each}
 				</div>
