@@ -888,7 +888,7 @@ func init() {
 				"system": false,
 				"type": "base",
 				"updateRule": "owner = @request.auth.id",
-				"viewRule": "owner = @request.auth.id"
+				"viewRule": "owner = @request.auth.id || ledger_members_via_ledger.user ?= @request.auth.id"
 			},
 			{
 				"createRule": null,
@@ -957,7 +957,7 @@ func init() {
 				],
 				"id": "pbc_2890819417",
 				"indexes": [],
-				"listRule": "ledger.owner = @request.auth.id || user = @request.auth.id",
+				"listRule": "ledger.owner = @request.auth.id || ledger.ledger_members_via_ledger.user ?= @request.auth.id",
 				"name": "ledger_members",
 				"system": false,
 				"type": "base",
