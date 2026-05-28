@@ -29,5 +29,9 @@ export const toasts = {
 	info: (message: string, duration = 3000) => toasts.add(message, 'info', duration),
 	remove: (id: number) => {
 		update((all) => all.filter((t) => t.id !== id));
+	},
+	clear: () => {
+		update(() => []);
+		nextId = 1;
 	}
 };

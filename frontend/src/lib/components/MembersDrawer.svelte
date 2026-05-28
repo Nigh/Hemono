@@ -12,19 +12,24 @@
 		members: Member[];
 		open: boolean;
 		onclose: () => void;
+		ownerId?: string;
 	}
 
-	let { members, open, onclose }: Props = $props();
+	let { members, open, onclose, ownerId }: Props = $props();
 </script>
 
-<div class="fixed inset-0 z-50 {open ? 'pointer-events-auto' : 'pointer-events-none'}">
+<div class="inset-0 fixed z-50 {open ? 'pointer-events-auto' : 'pointer-events-none'}">
 	<button
-		class="fixed inset-0 bg-black/40 transition-opacity duration-300 {open ? 'opacity-100' : 'opacity-0'}"
+		class="inset-0 bg-black/40 fixed transition-opacity duration-300 {open
+			? 'opacity-100'
+			: 'opacity-0'}"
 		onclick={onclose}
 		aria-label="关闭"
 	></button>
 	<div
-		class="fixed top-0 right-0 h-full w-72 bg-base-100 border-l border-base-300 shadow-xl p-4 space-y-4 overflow-y-auto transition-transform duration-300 {open ? 'translate-x-0' : 'translate-x-full'}"
+		class="top-0 right-0 w-72 bg-base-100 border-base-300 shadow-xl p-4 space-y-4 fixed h-full overflow-y-auto border-l transition-transform duration-300 {open
+			? 'translate-x-0'
+			: 'translate-x-full'}"
 	>
 		<div class="flex items-center justify-between">
 			<h3 class="font-bold text-lg">成员列表</h3>
@@ -49,9 +54,13 @@
 		<ul class="menu menu-sm w-full">
 			{#each members as member}
 				<li>
-					<div class="flex items-center gap-3">
+					<div class="gap-3 flex items-center">
 						<div class="avatar">
-							<div class="w-8 h-8 rounded-full">
+							<div
+								class="w-8 h-8 rounded-full {member.id === ownerId
+									? 'ring-warning ring-offset-base-100 ring-2 ring-offset-1'
+									: ''}"
+							>
 								<img
 									src={member.avatar
 										? pb.files.getURL(member, member.avatar)
@@ -59,10 +68,24 @@
 									alt="avatar"
 								/>
 							</div>
+							{#if member.id === ownerId}
+								<div
+									class="-top-0.5 -right-0.5 bg-base-100 shadow-sm absolute z-10 rounded-full p-px"
+								>
+									<svg
+										xmlns="http://www.w3.org/2000/svg"
+										viewBox="0 0 24 24"
+										fill="currentColor"
+										class="w-3.5 h-3.5 text-warning drop-shadow"
+									>
+										<path d="M2.5 18.5l2-10 5 4 2.5-6 2.5 6 5-4 2 10z" />
+									</svg>
+								</div>
+							{/if}
 						</div>
-						<div class="flex-1 min-w-0">
-							<p class="truncate font-medium">{member.name || member.email}</p>
-							<p class="truncate text-xs opacity-50">{member.email}</p>
+						<div class="min-w-0 flex-1">
+							<p class="font-medium truncate">{member.name || member.email}</p>
+							<p class="text-xs truncate opacity-50">{member.email}</p>
 						</div>
 					</div>
 				</li>

@@ -568,6 +568,8 @@ func main() {
 				avatar       string
 				totalExpense int
 				totalBenefit int
+				totalIncome  int
+				incomeShare  int
 			})
 
 			for _, member := range members {
@@ -583,6 +585,8 @@ func main() {
 					avatar       string
 					totalExpense int
 					totalBenefit int
+					totalIncome  int
+					incomeShare  int
 				}{
 					userId:       userId,
 					name:         user.GetString("name"),
@@ -590,6 +594,8 @@ func main() {
 					avatar:       user.GetString("avatar"),
 					totalExpense: 0,
 					totalBenefit: 0,
+					totalIncome:  0,
+					incomeShare:  0,
 				}
 			}
 
@@ -609,11 +615,15 @@ func main() {
 				})
 			}
 
-			// 计算支出和受益
+			// 计算支出、收入和受益
 			totalExpense := 0
 			totalBenefit := 0
+			totalIncome := 0
+			totalIncomeShare := 0
 			monthlyExpense := 0
+			monthlyIncome := 0
 			last7DaysExpense := 0
+			last7DaysIncome := 0
 
 			now := time.Now()
 			monthStart := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location())
@@ -625,50 +635,94 @@ func main() {
 				payer := tx.GetString("payer")
 				txType := tx.GetString("type")
 				beneficiary := tx.GetString("beneficiary")
+				direction := tx.GetString("direction")
 				txDate := tx.GetDateTime("date").Time()
 
-				// 支出统计
-				if member, ok := memberMap[payer]; ok {
-					member.totalExpense += amount
-					totalExpense += amount
+				if direction == "INCOME" {
+					// 收入统计
+					if member, ok := memberMap[payer]; ok {
+						member.totalIncome += amount
+						totalIncome += amount
 
-					if !txDate.Before(monthStart) && txDate.Before(nextMonthStart) {
-						monthlyExpense += amount
-					}
+						if !txDate.Before(monthStart) && txDate.Before(nextMonthStart) {
+							monthlyIncome += amount
+						}
 
-					if !txDate.Before(last7DaysStart) && !txDate.After(now) {
-						last7DaysExpense += amount
-					}
-				}
-
-				// 受益统计
-				if txType == "AA" {
-					// AA：平均分配给所有成员
-					if len(members) > 0 {
-						base := amount / len(members)
-						remainder := amount % len(members)
-
-						sort.Slice(members, func(i, j int) bool {
-							return members[i].GetString("user") < members[j].GetString("user")
-						})
-
-						for i, member := range members {
-							userId := member.GetString("user")
-							benefit := base
-							if i < remainder {
-								benefit += 1
-							}
-							if m, ok := memberMap[userId]; ok {
-								m.totalBenefit += benefit
-								totalBenefit += benefit
-							}
+						if !txDate.Before(last7DaysStart) && !txDate.After(now) {
+							last7DaysIncome += amount
 						}
 					}
-				} else if txType == "SINGLE" && beneficiary != "" {
-					// SINGLE：分配给受益人
-					if m, ok := memberMap[beneficiary]; ok {
-						m.totalBenefit += amount
-						totalBenefit += amount
+
+					// 收入分配
+					if txType == "AA" {
+						if len(members) > 0 {
+							base := amount / len(members)
+							remainder := amount % len(members)
+
+							sort.Slice(members, func(i, j int) bool {
+								return members[i].GetString("user") < members[j].GetString("user")
+							})
+
+							for i, member := range members {
+								userId := member.GetString("user")
+								share := base
+								if i < remainder {
+									share += 1
+								}
+								if m, ok := memberMap[userId]; ok {
+									m.incomeShare += share
+									totalIncomeShare += share
+								}
+							}
+						}
+					} else if txType == "SINGLE" && beneficiary != "" {
+						if m, ok := memberMap[beneficiary]; ok {
+							m.incomeShare += amount
+							totalIncomeShare += amount
+						}
+					}
+				} else {
+					// 支出统计
+					if member, ok := memberMap[payer]; ok {
+						member.totalExpense += amount
+						totalExpense += amount
+
+						if !txDate.Before(monthStart) && txDate.Before(nextMonthStart) {
+							monthlyExpense += amount
+						}
+
+						if !txDate.Before(last7DaysStart) && !txDate.After(now) {
+							last7DaysExpense += amount
+						}
+					}
+
+					// 受益统计
+					if txType == "AA" {
+						if len(members) > 0 {
+							base := amount / len(members)
+							remainder := amount % len(members)
+
+							sort.Slice(members, func(i, j int) bool {
+								return members[i].GetString("user") < members[j].GetString("user")
+							})
+
+							for i, member := range members {
+								userId := member.GetString("user")
+								benefit := base
+								if i < remainder {
+									benefit += 1
+								}
+								if m, ok := memberMap[userId]; ok {
+									m.totalBenefit += benefit
+									totalBenefit += benefit
+								}
+							}
+						}
+					} else if txType == "SINGLE" && beneficiary != "" {
+						if m, ok := memberMap[beneficiary]; ok {
+							m.totalBenefit += amount
+							totalBenefit += amount
+						}
 					}
 				}
 			}
@@ -681,6 +735,8 @@ func main() {
 				Avatar       string `json:"avatar"`
 				TotalExpense int    `json:"totalExpense"`
 				TotalBenefit int    `json:"totalBenefit"`
+				TotalIncome  int    `json:"totalIncome"`
+				IncomeShare  int    `json:"incomeShare"`
 				Balance      int    `json:"balance"`
 				Percentage   int    `json:"percentage"`
 			}
@@ -689,7 +745,7 @@ func main() {
 			maxBalance := 0
 
 			for _, member := range memberMap {
-				balance := member.totalExpense - member.totalBenefit
+				balance := member.totalExpense - member.totalIncome - member.totalBenefit + member.incomeShare
 				balanceAbs := balance
 				if balanceAbs < 0 {
 					balanceAbs = -balanceAbs
@@ -705,6 +761,8 @@ func main() {
 					Avatar:       member.avatar,
 					TotalExpense: member.totalExpense,
 					TotalBenefit: member.totalBenefit,
+					TotalIncome:  member.totalIncome,
+					IncomeShare:  member.incomeShare,
 					Balance:      balance,
 				}
 				memberStats = append(memberStats, stat)
@@ -739,8 +797,12 @@ func main() {
 			return c.JSON(http.StatusOK, map[string]any{
 				"totalExpense":     totalExpense,
 				"totalBenefit":     totalBenefit,
+				"totalIncome":      totalIncome,
+				"totalIncomeShare": totalIncomeShare,
 				"monthlyExpense":   monthlyExpense,
+				"monthlyIncome":    monthlyIncome,
 				"last7DaysExpense": last7DaysExpense,
+				"last7DaysIncome":  last7DaysIncome,
 				"memberStats":      memberStats,
 			})
 		})

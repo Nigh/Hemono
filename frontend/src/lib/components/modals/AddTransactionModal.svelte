@@ -22,6 +22,7 @@
 	let amount = $state('');
 	let note = $state('');
 	let splitType = $state('AA');
+	let direction = $state('EXPENSE');
 	let beneficiary = $state('');
 	let operationMessage = $state<{ type: OperationMessageType; text: string } | null>(null);
 	let operationMessageTimer: ReturnType<typeof setTimeout> | null = null;
@@ -79,6 +80,7 @@
 				payer: $currentUser.id,
 				amount: Math.round(Number(parsedAmount) * 100),
 				type: splitType,
+				direction,
 				beneficiary: splitType === 'SINGLE' ? beneficiary : null,
 				note,
 				date: new Date()
@@ -106,6 +108,19 @@
 		{/if}
 
 		<div class="space-y-4" class:mt-4={!operationMessage}>
+			<div class="tabs tabs-boxed bg-base-200">
+				<button
+					class="tab flex-1 {direction === 'EXPENSE' ? 'tab-active text-error' : ''}"
+					onclick={() => (direction = 'EXPENSE')}
+					disabled={isSuccess}>支出</button
+				>
+				<button
+					class="tab flex-1 {direction === 'INCOME' ? 'tab-active text-success' : ''}"
+					onclick={() => (direction = 'INCOME')}
+					disabled={isSuccess}>收入</button
+				>
+			</div>
+
 			<input
 				type="number"
 				bind:value={amount}

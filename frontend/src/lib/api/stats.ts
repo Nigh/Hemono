@@ -7,15 +7,21 @@ export interface MemberStat {
 	avatar: string;
 	totalExpense: number; // 分
 	totalBenefit: number; // 分
-	balance: number; // 分，支出 - 受益
+	totalIncome: number; // 分
+	incomeShare: number; // 分
+	balance: number; // 分，支出 - 收入 - 受益 + 收入分配
 	percentage: number; // 百分比
 }
 
 export interface LedgerStat {
 	totalExpense: number; // 分
 	totalBenefit: number; // 分
+	totalIncome: number; // 分
+	totalIncomeShare: number; // 分
 	monthlyExpense: number; // 分
+	monthlyIncome: number; // 分
 	last7DaysExpense: number; // 分
+	last7DaysIncome: number; // 分
 	memberStats: MemberStat[];
 }
 
@@ -26,7 +32,8 @@ export async function fetchLedgerStats(ledgerId: string, month?: string): Promis
 	}
 
 	const response = await pb.send(url, {
-		method: 'GET'
+		method: 'GET',
+		requestKey: null
 	});
 
 	return response as LedgerStat;

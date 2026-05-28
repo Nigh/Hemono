@@ -7,9 +7,10 @@
 		isLoading: boolean;
 		error: string | null;
 		onretry?: () => void;
+		ownerId?: string;
 	}
 
-	let { stats, isLoading, error, onretry }: Props = $props();
+	let { stats, isLoading, error, onretry, ownerId }: Props = $props();
 
 	function formatAmount(cents: number): string {
 		return (cents / 100).toFixed(2);
@@ -63,18 +64,22 @@
 {:else if stats}
 	<div class="gap-4 flex flex-col">
 		<!-- 统计摘要 -->
-		<div class="grid gap-4 sm:grid-cols-3">
+		<div class="gap-4 sm:grid-cols-2 grid">
 			<div class="rounded-lg bg-base-200 p-4">
 				<div class="text-xs font-medium opacity-60">总支出</div>
-				<div class="text-xl font-bold">¥{formatAmount(stats.totalExpense)}</div>
+				<div class="text-xl font-bold text-error">¥{formatAmount(stats.totalExpense)}</div>
+			</div>
+			<div class="rounded-lg bg-base-200 p-4">
+				<div class="text-xs font-medium opacity-60">总收入</div>
+				<div class="text-xl font-bold text-success">¥{formatAmount(stats.totalIncome)}</div>
 			</div>
 			<div class="rounded-lg bg-base-200 p-4">
 				<div class="text-xs font-medium opacity-60">月支出</div>
-				<div class="text-xl font-bold">¥{formatAmount(stats.monthlyExpense)}</div>
+				<div class="text-xl font-bold text-error">¥{formatAmount(stats.monthlyExpense)}</div>
 			</div>
 			<div class="rounded-lg bg-base-200 p-4">
-				<div class="text-xs font-medium opacity-60">7天支出</div>
-				<div class="text-xl font-bold">¥{formatAmount(stats.last7DaysExpense)}</div>
+				<div class="text-xs font-medium opacity-60">月收入</div>
+				<div class="text-xl font-bold text-success">¥{formatAmount(stats.monthlyIncome)}</div>
 			</div>
 		</div>
 
@@ -85,7 +90,11 @@
 				{#each stats.memberStats as member}
 					<div class="gap-3 rounded-lg bg-base-100 p-3 flex items-center">
 						<div class="avatar">
-							<div class="w-10 h-10 border-primary rounded-full border-2">
+							<div
+								class="w-10 h-10 rounded-full {member.userId === ownerId
+									? 'ring-warning ring-offset-base-100 ring-2 ring-offset-1'
+									: 'border-primary border-2'}"
+							>
 								<img
 									src={member.avatar
 										? pb.files.getURL(
@@ -100,13 +109,28 @@
 									alt="avatar"
 								/>
 							</div>
+							{#if member.userId === ownerId}
+								<div
+									class="-top-0.5 -right-0.5 bg-base-100 shadow-sm absolute z-10 rounded-full p-px"
+								>
+									<svg
+										xmlns="http://www.w3.org/2000/svg"
+										viewBox="0 0 24 24"
+										fill="currentColor"
+										class="w-4 h-4 text-warning drop-shadow"
+									>
+										<path d="M2.5 18.5l2-10 5 4 2.5-6 2.5 6 5-4 2 10z" />
+									</svg>
+								</div>
+							{/if}
 						</div>
 						<div class="flex flex-1 flex-col">
 							<div class="font-medium">{member.name || member.email}</div>
 							<div class="text-xs opacity-60">
-								支出: ¥{formatAmount(member.totalExpense)} | 受益: ¥{formatAmount(
-									member.totalBenefit
-								)}
+								支出: ¥{formatAmount(member.totalExpense)}
+								{#if member.totalIncome > 0}
+									| 收入: ¥{formatAmount(member.totalIncome)}
+								{/if}
 							</div>
 						</div>
 						<div class="text-right">

@@ -15,7 +15,8 @@ export async function fetchLedger(id: string) {
 export async function fetchLedgerMembers(ledgerId: string) {
 	const res = await pb.collection('ledger_members').getFullList({
 		filter: `ledger = "${ledgerId}"`,
-		expand: 'user'
+		expand: 'user',
+		requestKey: null
 	});
 	return res.filter((m) => m.expand?.user).map((m) => m.expand!.user);
 }
@@ -25,6 +26,7 @@ export interface TransactionData {
 	payer: string;
 	amount: number;
 	type: string;
+	direction: string;
 	beneficiary: string | null;
 	note: string;
 	date: Date;
@@ -41,8 +43,6 @@ export async function fetchTransactions(ledgerId: string) {
 		sort: '-date,-created'
 	});
 }
-
-
 
 export async function deleteTransaction(id: string) {
 	return await pb.collection('transactions').delete(id);

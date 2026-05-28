@@ -13,6 +13,7 @@
 	let members: any[] = $state([]);
 	let expandedLedger = $state('');
 	let activeLedgerName = $state('');
+	let statsRefreshCounter = $state(0);
 	let inviteModals: Map<string, { open: () => void; resetState: () => void }> = new Map();
 
 	function handleRegisterInviteModal(e: CustomEvent) {
@@ -79,8 +80,7 @@
 	}
 
 	function handleTransactionAdded() {
-		expandedLedger = '';
-		activeLedgerName = '';
+		statsRefreshCounter++;
 	}
 </script>
 
@@ -105,6 +105,7 @@
 						isOwner={$currentUser?.id === ledger.owner}
 						onaddtransaction={openAddTransactionModal}
 						ongenerateinvite={() => openGenerateInviteModal(ledger.id)}
+						{statsRefreshCounter}
 					/>
 				{/if}
 			</div>
