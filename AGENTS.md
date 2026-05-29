@@ -40,8 +40,9 @@
 - **users** — Auth collection (GitHub OAuth2 mapped: `name`, `avatar`)
 - **ledgers** — `name`, `owner` (→ users)
 - **ledger_members** — `ledger` (→ ledgers), `user` (→ users), `role`
-- **transactions** — `ledger`, `payer` (→ users), `amount` (int, **cents/分**), `type` (`AA` | `SINGLE`), `beneficiary` (→ users), `note`, `date`
+- **transactions** — `ledger`, `payer` (→ users), `amount` (int, **cents/分**), `type` (`AA` | `SINGLE`), `direction` (`EXPENSE` | `INCOME`), `beneficiary` (→ users), `note`, `date`
 - **invitation_codes** — `code` (`ABC-123456`), `ledger`, `created_by`, `expires_at`, `max_uses`, `used_count`
+- **api_tokens** — `user` (→ users), `name` (text, max 100), `token_hash` (SHA-256, 64 chars), `token_prefix` (first 12 chars of token)
 
 ### Custom Backend API Routes (defined in `backend/main.go`)
 
@@ -53,6 +54,22 @@
 | `POST` | `/api/invitations/join` | Join ledger via invitation code |
 | `DELETE` | `/api/invitations/{id}` | Delete invitation code |
 | `GET` | `/api/ledgers/{id}/stats` | Get ledger statistics (supports `?month=YYYY-MM`) |
+| `POST` | `/api/tokens` | Create API token (max 3 per user) |
+| `GET` | `/api/tokens` | List user's API tokens |
+| `DELETE` | `/api/tokens/{id}` | Delete API token |
+| `GET` | `/api/v1/ledgers` | List user's ledgers (token auth) |
+| `POST` | `/api/v1/ledgers` | Create ledger (token auth) |
+| `GET` | `/api/v1/ledgers/{id}` | Get ledger detail (token auth) |
+| `DELETE` | `/api/v1/ledgers/{id}` | Delete ledger, owner only (token auth) |
+| `GET` | `/api/v1/ledgers/{id}/members` | List ledger members (token auth) |
+| `GET` | `/api/v1/ledgers/{id}/transactions` | List transactions (token auth) |
+| `POST` | `/api/v1/ledgers/{id}/transactions` | Create transaction (token auth) |
+| `DELETE` | `/api/v1/transactions/{id}` | Delete transaction, payer only (token auth) |
+| `GET` | `/api/v1/ledgers/{id}/stats` | Get ledger statistics (token auth) |
+| `GET` | `/api/v1/ledgers/{id}/invitation` | Get active invitation (token auth) |
+| `POST` | `/api/v1/ledgers/{id}/invitation` | Generate invitation code (token auth) |
+| `DELETE` | `/api/v1/invitations/{id}` | Delete invitation (token auth) |
+| `POST` | `/api/v1/invitations/join` | Join ledger via code (token auth) |
 
 ### Key Design Decisions
 
@@ -61,6 +78,7 @@
 - **Invitation codes**: 24h expiry, configurable max uses (1-99), auto-cleanup on access when expired/exhausted.
 - **Ledger auto-membership**: `OnRecordAfterCreateSuccess("ledgers")` hook automatically adds creator as `admin` member.
 - **Admin bootstrap**: Superuser auto-created from `PB_ADMIN_EMAIL` / `PB_ADMIN_PASSWORD` env vars on bootstrap.
+- **API Token auth**: Tokens are `hmn_` + 40 hex chars (44 total). Stored as SHA-256 hash. Lookup by `token_prefix` (first 12 chars) then hash compare. Max 3 per user. `/api/tokens/*` uses PocketBase session auth; `/api/v1/*` uses `Authorization: Bearer <token>` header via `authenticateRequest()` helper.
 
 ---
 
@@ -81,7 +99,7 @@
 - **Single-file architecture**: All custom logic lives in `backend/main.go`. Do not split into multiple Go files unless the file exceeds ~1000 lines.
 - **PocketBase patterns**: Use `app.FindRecordById`, `FindFirstRecordByFilter`, `FindRecordsByFilter`, `core.NewRecord`, `app.Save`, `app.Delete`.
 - **HTTP responses**: Always return structured JSON with `code` + `message` on error. Use `net/http` status constants.
-- **Auth check**: Always verify `c.Auth != nil` before processing. Return `401` if unauthenticated.
+- **Auth check**: Always verify `c.Auth != nil` before processing. Return `401` if unauthenticated. For `/api/v1/*` routes, use `authenticateRequest(app, c)` which validates `Authorization: Bearer <token>` header.
 - **Migrations**: Use PocketBase snapshot migrations. Run `go run . migrate collections` after schema changes, then `go run . migrate history-sync`.
 
 ### Code Style
