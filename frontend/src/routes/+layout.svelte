@@ -59,6 +59,7 @@
 							<span class="tooltip" data-tip={$currentUser.email}>{$currentUser.name}</span>
 						</li>
 						<li><button on:click={openJoinLedgerModal}>📥 加入账本</button></li>
+						<li><a href="/api-docs">📋 API 文档</a></li>
 						<li><button on:click={logout} class="text-error">退出登录</button></li>
 					</ul>
 				</div>
@@ -81,6 +82,9 @@
 			</div>
 		{/if}
 	</main>
+	<footer class="py-4 text-xs text-base-content/30 text-center">
+		<a href="/api-docs" class="hover:text-base-content/50 transition-colors">API 文档</a>
+	</footer>
 
 	<JoinLedgerModal />
 </div>
