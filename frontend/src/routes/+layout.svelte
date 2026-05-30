@@ -59,6 +59,7 @@
 							<span class="tooltip" data-tip={$currentUser.email}>{$currentUser.name}</span>
 						</li>
 						<li><button on:click={openJoinLedgerModal}>📥 加入账本</button></li>
+						<li><a href="/settings/tokens">🔑 API Token 管理</a></li>
 						<li><button on:click={logout} class="text-error">退出登录</button></li>
 					</ul>
 				</div>
