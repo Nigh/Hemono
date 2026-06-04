@@ -11,24 +11,61 @@
 	import TransactionCard from '$lib/components/TransactionCard.svelte';
 
 	let ledgerId = $derived($page.params.id ?? '');
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	let ledger: any = $state(null);
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	let members: any[] = $state([]);
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	let transactions: any[] = $state([]);
 	let isLoading = $state(true);
 	let error: string | null = $state(null);
 	let drawerOpen = $state(false);
 
+	let searchKeyword = $state('');
+	let debouncedKeyword = $state('');
+	let searchTimer: ReturnType<typeof setTimeout> | null = null;
+
+	let currentPage = $state(1);
+	let totalItems = $state(0);
+	let totalPages = $state(0);
+	const perPage = 20;
+
+	function debounceSearch(value: string) {
+		if (searchTimer) clearTimeout(searchTimer);
+		searchTimer = setTimeout(() => {
+			debouncedKeyword = value;
+			currentPage = 1;
+		}, 300);
+	}
+
+	$effect(() => {
+		debounceSearch(searchKeyword);
+	});
+
+	async function loadTransactions() {
+		const result = await fetchTransactions({
+			ledgerId,
+			page: currentPage,
+			perPage,
+			keyword: debouncedKeyword
+		});
+		transactions = result.items;
+		totalItems = result.totalItems;
+		totalPages = result.totalPages;
+	}
+
 	async function loadData() {
 		isLoading = true;
 		error = null;
 		try {
-			[ledger, members, transactions] = await Promise.all([
+			const [ledgerResult, membersResult] = await Promise.all([
 				fetchLedger(ledgerId),
-				fetchLedgerMembers(ledgerId),
-				fetchTransactions(ledgerId)
+				fetchLedgerMembers(ledgerId)
 			]);
-		} catch (err: any) {
-			error = err.message || '加载失败';
+			ledger = ledgerResult;
+			members = membersResult;
+		} catch (err: unknown) {
+			error = err instanceof Error ? err.message : '加载失败';
 		} finally {
 			isLoading = false;
 		}
@@ -40,14 +77,32 @@
 		}
 	});
 
+	$effect(() => {
+		void debouncedKeyword;
+		void currentPage;
+		if (!isLoading && ledgerId) {
+			loadTransactions();
+		}
+	});
+
 	async function handleDelete(id: string) {
 		try {
 			await deleteTransaction(id);
-			transactions = transactions.filter((t) => t.id !== id);
 			toasts.success('已删除');
-		} catch (err: any) {
-			toasts.error(`删除失败: ${err.message}`);
+			await loadTransactions();
+		} catch (err: unknown) {
+			toasts.error(`删除失败: ${err instanceof Error ? err.message : '未知错误'}`);
 		}
+	}
+
+	function goToPage(page: number) {
+		if (page >= 1 && page <= totalPages) {
+			currentPage = page;
+		}
+	}
+
+	function clearSearch() {
+		searchKeyword = '';
 	}
 </script>
 
@@ -107,15 +162,98 @@
 			</div>
 		</div>
 
+		<label class="input input-bordered gap-2 flex w-full items-center">
+			<svg
+				xmlns="http://www.w3.org/2000/svg"
+				class="h-4 w-4 opacity-40"
+				fill="none"
+				viewBox="0 0 24 24"
+				stroke="currentColor"
+			>
+				<path
+					stroke-linecap="round"
+					stroke-linejoin="round"
+					stroke-width="2"
+					d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+				/>
+			</svg>
+			<input
+				type="text"
+				class="grow"
+				placeholder="搜索备注、付款人、金额…"
+				bind:value={searchKeyword}
+			/>
+			{#if searchKeyword}
+				<button class="btn btn-ghost btn-xs btn-circle" onclick={clearSearch} title="清除搜索">
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						class="h-4 w-4"
+						fill="none"
+						viewBox="0 0 24 24"
+						stroke="currentColor"
+					>
+						<path
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							stroke-width="2"
+							d="M6 18L18 6M6 6l12 12"
+						/>
+					</svg>
+				</button>
+			{/if}
+		</label>
+
+		{#if totalItems > 0}
+			<div class="text-base-content/50 text-xs">
+				共 {totalItems} 条记录{#if totalPages > 1}，第 {currentPage}/{totalPages} 页{/if}
+			</div>
+		{/if}
+
 		<div class="space-y-2">
 			{#each transactions as tx (tx.id)}
 				<TransactionCard transaction={tx} ondelete={handleDelete} />
 			{:else}
 				<div class="text-center py-10 opacity-30">
-					<p>暂无记账记录</p>
+					<p>{debouncedKeyword ? '没有匹配的记录' : '暂无记账记录'}</p>
 				</div>
 			{/each}
 		</div>
+
+		{#if totalPages > 1}
+			<div class="flex justify-center">
+				<div class="join">
+					<button
+						class="join-item btn btn-sm"
+						disabled={currentPage <= 1}
+						onclick={() => goToPage(currentPage - 1)}
+					>
+						«
+					</button>
+					{#each Array.from({ length: totalPages }, (_, i) => i + 1) as p (p)}
+						{#if totalPages <= 7 || p === 1 || p === totalPages || Math.abs(p - currentPage) <= 1}
+							<button
+								class="join-item btn btn-sm"
+								class:btn-active={p === currentPage}
+								onclick={() => goToPage(p)}
+							>
+								{p}
+							</button>
+					{:else if p === 2 && currentPage > 3}
+						<button class="join-item btn btn-sm btn-disabled">…</button>
+					{:else if p === totalPages - 1 && currentPage < totalPages - 2}
+							<button class="join-item btn btn-sm btn-disabled">…</button>
+						{/if}
+					{/each}
+					<button
+						class="join-item btn btn-sm"
+						disabled={currentPage >= totalPages}
+						onclick={() => goToPage(currentPage + 1)}
+					>
+						»
+					</button>
+				</div>
+			</div>
+		{/if}
 	{/if}
 </div>
 
