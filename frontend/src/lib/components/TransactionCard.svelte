@@ -23,17 +23,16 @@
 	const dateStr = $derived(new Date(transaction.date).toLocaleDateString('zh-CN'));
 	const isIncome = $derived(transaction.direction === 'INCOME');
 	const canDelete = $derived(payer?.id === pb.authStore.record?.id);
+	let deleteDialog: HTMLDialogElement;
 
 	function handleDelete() {
-		if (confirm('确定要删除这笔记录吗？')) {
-			ondelete?.(transaction.id);
-		}
+		deleteDialog.showModal();
 	}
 </script>
 
 <div class="card border-base-300 bg-base-100 border">
 	<div class="card-body p-3 gap-2">
-		<div class="flex items-center justify-between">
+		<div class="gap-2 flex flex-wrap items-center justify-between">
 			<div class="gap-2 min-w-0 flex items-center">
 				{#if payer}
 					<div class="avatar">
@@ -49,7 +48,7 @@
 					<span class="text-sm truncate">{payer.name || payer.email}</span>
 				{/if}
 				{#if transaction.note}
-					<span class="text-xs truncate opacity-40">· {transaction.note}</span>
+					<span class="text-xs text-text-muted truncate">· {transaction.note}</span>
 				{/if}
 			</div>
 
@@ -57,32 +56,32 @@
 				<span class="text-base font-bold tabular-nums {isIncome ? 'text-success' : 'text-error'}">
 					{isIncome ? '+' : '-'}¥{amountYuan}
 				</span>
-			{#if canDelete}
-				<button
-					class="btn btn-ghost btn-xs btn-circle text-error"
-					onclick={handleDelete}
-					title="删除"
-				>
-					<svg
-						xmlns="http://www.w3.org/2000/svg"
-						class="h-4 w-4"
-						fill="none"
-						viewBox="0 0 24 24"
-						stroke="currentColor"
+				{#if canDelete}
+					<button
+						class="btn btn-ghost btn-xs btn-circle text-error"
+						onclick={handleDelete}
+						title="删除"
 					>
-						<path
-							stroke-linecap="round"
-							stroke-linejoin="round"
-							stroke-width="2"
-							d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-						/>
-					</svg>
-				</button>
-			{/if}
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							class="h-4 w-4"
+							fill="none"
+							viewBox="0 0 24 24"
+							stroke="currentColor"
+						>
+							<path
+								stroke-linecap="round"
+								stroke-linejoin="round"
+								stroke-width="2"
+								d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+							/>
+						</svg>
+					</button>
+				{/if}
 			</div>
 		</div>
 
-		<div class="gap-2 text-xs flex items-center opacity-40">
+		<div class="gap-2 text-xs text-text-muted flex items-center">
 			<span>{dateStr}</span>
 			<span class="badge badge-xs {isIncome ? 'badge-success' : 'badge-error'}">
 				{isIncome ? '收入' : '支出'}
@@ -91,3 +90,15 @@
 		</div>
 	</div>
 </div>
+
+<dialog bind:this={deleteDialog} class="modal" aria-labelledby="delete-title-{transaction.id}">
+	<div class="modal-box border">
+		<h2 id="delete-title-{transaction.id}" class="text-xl font-semibold">删除这笔记录？</h2>
+		<p class="mt-3 text-text-muted">这笔 ¥{amountYuan} 的记录将被删除，删除后无法恢复。</p>
+		<form method="dialog" class="modal-action">
+			<button class="btn btn-ghost">取消</button>
+			<button class="btn btn-error" onclick={() => ondelete?.(transaction.id)}>确认删除</button>
+		</form>
+	</div>
+	<form method="dialog" class="modal-backdrop"><button>关闭</button></form>
+</dialog>

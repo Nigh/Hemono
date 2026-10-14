@@ -68,13 +68,14 @@
 
 ### Frontend
 
-- **Svelte 5 runes only**: Use `$state()`, `$derived()`, `$effect()`, `$props()` — **never** use legacy `let` reactivity or `$:` labels. `GenerateInviteModal.svelte` is a known exception (still uses old syntax); refactor when touching it.
+- **Svelte 5 runes only**: Use `$state()`, `$derived()`, `$effect()`, `$props()` — **never** use legacy `let` reactivity or `$:` labels. Invitation modals use runes; `GenerateInviteModal` registers its methods through the `onregister` callback.
 - **Component props**: Define via `interface Props` + `$props()`. Callback props use `on*` naming (e.g., `oncreated`, `onadded`).
 - **No `export let`**: This is Svelte 4 syntax. Use `$props()` destructuring instead.
 - **Modals**: Use native `<dialog>` element with DaisyUI `modal` class. Open via `dialogElement.showModal()` or `(window as any).id.showModal()`.
+- **Frontend tests**: `bun run test` runs Vitest with jsdom and the installed Svelte Testing Library Vite plugin for browser component rendering. Theme interaction tests cover transaction delete confirmation, choice groups, and invitation modal registration/loading.
 - **API calls**: All PocketBase interactions go through `src/lib/api/` modules using the singleton `pb` from `$lib/pb`. Custom routes use `pb.send()`.
 - **Notifications**: Use `toasts` store from `$lib/toast` (global). `OperationMessage` component is for inline modal feedback.
-- **Styling**: Tailwind CSS v4 + DaisyUI v5. Custom dark theme `xianii` defined in `app.css`. Use DaisyUI semantic classes (`btn`, `card`, `modal`, `alert`, etc.).
+- **Styling**: Tailwind CSS v4 + DaisyUI v5 with `@xianii/design-system` 2.4.0 from [xianii-theme](https://github.com/Nigh/xianii-theme). `app.css` imports the official theme adapter; `app.html` selects dark `xianii`. Use its semantic color, typography and radius tokens with DaisyUI classes (`btn`, `card`, `modal`, `alert`, etc.). Secondary text uses `text-text-muted`; labels and controls use `.field` and the theme's label/help spacing. Toggle groups use labelled groups and `aria-pressed` buttons with distinct hover, selected and focus states. Dialogs require a labelled heading, visible cancel path and theme overlay; do not use browser `alert`, `confirm` or `prompt`.
 
 ### Backend
 

@@ -16,23 +16,20 @@
 	}
 
 	let { members, open, onclose, ownerId }: Props = $props();
+	let dialog: HTMLDialogElement;
+
+	$effect(() => {
+		if (open) dialog.showModal();
+		else dialog.close();
+	});
 </script>
 
-<div class="inset-0 fixed z-50 {open ? 'pointer-events-auto' : 'pointer-events-none'}">
-	<button
-		class="inset-0 bg-black/40 fixed transition-opacity duration-300 {open
-			? 'opacity-100'
-			: 'opacity-0'}"
-		onclick={onclose}
-		aria-label="关闭"
-	></button>
+<dialog bind:this={dialog} class="modal" aria-labelledby="members-title" {onclose}>
 	<div
-		class="top-0 right-0 w-72 bg-base-100 border-base-300 shadow-xl p-4 space-y-4 fixed h-full overflow-y-auto border-l transition-transform duration-300 {open
-			? 'translate-x-0'
-			: 'translate-x-full'}"
+		class="right-0 top-0 w-72 space-y-4 border-base-300 bg-base-100 p-4 fixed h-full max-w-full overflow-y-auto border-l"
 	>
 		<div class="flex items-center justify-between">
-			<h3 class="font-bold text-lg">成员列表</h3>
+			<h2 id="members-title" class="text-xl font-semibold">成员列表</h2>
 			<button class="btn btn-ghost btn-sm btn-circle" onclick={onclose} aria-label="关闭成员列表">
 				<svg
 					xmlns="http://www.w3.org/2000/svg"
@@ -85,13 +82,14 @@
 						</div>
 						<div class="min-w-0 flex-1">
 							<p class="font-medium truncate">{member.name || member.email}</p>
-							<p class="text-xs truncate opacity-50">{member.email}</p>
+							<p class="text-xs text-text-muted truncate">{member.email}</p>
 						</div>
 					</div>
 				</li>
 			{:else}
-				<li class="text-center opacity-50 py-4">暂无成员</li>
+				<li class="text-center text-text-muted py-4">暂无成员</li>
 			{/each}
 		</ul>
 	</div>
-</div>
+	<form method="dialog" class="modal-backdrop"><button>关闭</button></form>
+</dialog>

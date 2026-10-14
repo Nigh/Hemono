@@ -1,20 +1,20 @@
 <script lang="ts">
-	import { pb, currentUser } from '$lib/pb';
+	import { pb } from '$lib/pb';
 	import { toasts } from '$lib/toast';
 
 	// 状态管理
-	let inputCode = '';
-	let ledgerInfo: {
+	let inputCode = $state('');
+	let ledgerInfo = $state<{
 		ledgerId: string;
 		ledgerName: string;
 		createdBy: string;
 		expiresAt: string;
 		maxUses: number;
 		usedCount: number;
-	} | null = null;
-	let isLoading = false;
-	let step: 'input' | 'confirm' = 'input';
-	let error = '';
+	} | null>(null);
+	let isLoading = $state(false);
+	let step = $state<'input' | 'confirm'>('input');
+	let error = $state('');
 
 	// 关闭模态框
 	function closeModal() {
@@ -145,17 +145,21 @@
 	}
 </script>
 
-<dialog id="join_ledger_modal" class="modal modal-bottom sm:modal-middle">
+<dialog
+	id="join_ledger_modal"
+	aria-labelledby="join-title"
+	class="modal modal-bottom sm:modal-middle"
+>
 	<div class="modal-box border">
 		<div class="mb-4 flex items-center justify-between">
-			<h3 class="text-lg font-bold">
+			<h2 id="join-title" class="text-xl font-semibold">
 				{#if step === 'input'}
 					加入账本
 				{:else}
 					确认加入
 				{/if}
-			</h3>
-			<button class="btn btn-ghost btn-sm" on:click={closeModal} title="关闭模态框">
+			</h2>
+			<button class="btn btn-ghost btn-sm" onclick={closeModal} title="关闭模态框">
 				<svg
 					xmlns="http://www.w3.org/2000/svg"
 					class="h-4 w-4"
@@ -181,26 +185,28 @@
 
 		{#if step === 'input'}
 			<div class="space-y-4">
-				<div>
-					<label class="label">
+				<div class="field">
+					<label for="join-code" class="field-label">
 						<span class="label-text font-medium">请输入邀请码</span>
 					</label>
 					<input
+						id="join-code"
+						aria-describedby="join-code-help"
 						type="text"
 						placeholder="ABC-123456"
 						class="input input-bordered font-mono text-lg tracking-wider w-full text-center"
 						class:input-error={error && !isValidFormat(inputCode)}
 						value={inputCode}
-						on:input={handleInputChange}
-						on:keydown={(e) => e.key === 'Enter' && validateAndPreview()}
+						oninput={handleInputChange}
+						onkeydown={(e) => e.key === 'Enter' && validateAndPreview()}
 						disabled={isLoading}
 						maxlength="10"
 					/>
-					<label class="label">
-						<span class="label-text-alt text-base-content/60">
+					<p id="join-code-help" class="field-help">
+						<span class="label-text-alt text-text-muted">
 							朋友会分享给你一个形如 ABC-123456 的邀请码
 						</span>
-					</label>
+					</p>
 				</div>
 
 				{#if inputCode && !isValidFormat(inputCode)}
@@ -210,10 +216,10 @@
 				{/if}
 
 				<div class="modal-action">
-					<button class="btn btn-ghost" on:click={closeModal} disabled={isLoading}>取消</button>
+					<button class="btn btn-ghost" onclick={closeModal} disabled={isLoading}>取消</button>
 					<button
 						class="btn btn-primary"
-						on:click={validateAndPreview}
+						onclick={validateAndPreview}
 						disabled={isLoading || !isValidFormat(inputCode)}
 					>
 						{#if isLoading}
@@ -225,23 +231,23 @@
 			</div>
 		{:else if step === 'confirm' && ledgerInfo}
 			<div class="space-y-4">
-				<div class="bg-base-200 rounded-xl p-4">
+				<div class="bg-base-200 rounded-box p-4">
 					<h4 class="font-bold text-lg mb-2">邀请你加入账本</h4>
 					<div class="space-y-2">
 						<div class="flex justify-between">
-							<span class="text-base-content/60">账本名称：</span>
+							<span class="text-text-muted">账本名称：</span>
 							<span class="font-medium">{ledgerInfo.ledgerName}</span>
 						</div>
 						<div class="flex justify-between">
-							<span class="text-base-content/60">邀请方：</span>
+							<span class="text-text-muted">邀请方：</span>
 							<span class="font-medium">{ledgerInfo.createdBy}</span>
 						</div>
 						<div class="flex justify-between">
-							<span class="text-base-content/60">有效期至：</span>
+							<span class="text-text-muted">有效期至：</span>
 							<span class="font-medium text-warning">{ledgerInfo.expiresAt}</span>
 						</div>
 						<div class="flex justify-between">
-							<span class="text-base-content/60">使用情况：</span>
+							<span class="text-text-muted">使用情况：</span>
 							<span class="font-medium text-primary"
 								>{ledgerInfo.usedCount}/{ledgerInfo.maxUses}</span
 							>
@@ -250,8 +256,8 @@
 				</div>
 
 				<div class="modal-action">
-					<button class="btn btn-ghost" on:click={goBack} disabled={isLoading}>返回</button>
-					<button class="btn btn-primary" on:click={confirmJoin} disabled={isLoading}>
+					<button class="btn btn-ghost" onclick={goBack} disabled={isLoading}>返回</button>
+					<button class="btn btn-primary" onclick={confirmJoin} disabled={isLoading}>
 						{#if isLoading}
 							<span class="loading loading-spinner loading-sm"></span>
 						{/if}
@@ -262,6 +268,6 @@
 		{/if}
 	</div>
 	<form method="dialog" class="modal-backdrop">
-		<button on:click={closeModal}>关闭</button>
+		<button onclick={closeModal}>关闭</button>
 	</form>
 </dialog>

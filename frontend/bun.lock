@@ -5,6 +5,7 @@
     "": {
       "name": "frontend",
       "dependencies": {
+        "@xianii/design-system": "2.4.0",
         "pocketbase": "^0.26.5",
       },
       "devDependencies": {
@@ -329,6 +330,8 @@
     "@vitest/spy": ["@vitest/spy@4.1.6", "", {}, "sha512-JFKxMx6udhwKh/Ldo270e17QX710vgunMkuPAvXjHSvC6oqLWAHhVhjg/I71q0u0CBSErIODV1Kjv0FQNSWjdg=="],
 
     "@vitest/utils": ["@vitest/utils@4.1.6", "", { "dependencies": { "@vitest/pretty-format": "4.1.6", "convert-source-map": "^2.0.0", "tinyrainbow": "^3.1.0" } }, "sha512-FxIY+U81R3LGKCxaHHFRQ5+g6/iRgGLmeHWdp2Amj4ljQRrEIWHmZyDfDYBRZlpyqA7qKxtS9DD1dhk8RnRIVQ=="],
+
+    "@xianii/design-system": ["@xianii/design-system@2.4.0", "", { "peerDependencies": { "daisyui": "^5", "tailwindcss": "^4" }, "optionalPeers": ["daisyui", "tailwindcss"] }, "sha512-CtJ68H+ERueOWGfJeFLCLmWA5Pn6Z9QAmjJNNpjuSahelmCqg6NhU8hpfaah/lZE9YJDp8W0KCZYXl/mOB1rYg=="],
 
     "acorn": ["acorn@8.15.0", "", { "bin": { "acorn": "bin/acorn" } }, "sha512-NZyJarBfL7nWwIq+FDL6Zp/yHEhePMNnnJ0y3qfieCrmNvYct8uvtiV41UvlSe6apAfk0fY1FbWx+NwfmpvtTg=="],
 

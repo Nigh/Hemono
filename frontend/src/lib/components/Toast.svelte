@@ -4,7 +4,7 @@
 	import { fade, fly } from 'svelte/transition';
 </script>
 
-<div class="toast toast-top toast-center z-100">
+<div class="toast toast-top toast-center z-100 max-w-full" aria-live="polite">
 	{#each $toasts as toast (toast.id)}
 		<div
 			animate:flip={{ duration: 300 }}
@@ -14,10 +14,14 @@
 				? 'alert-error'
 				: ''} {toast.type === 'warning' ? 'alert-warning' : ''} {toast.type === 'info'
 				? 'alert-info'
-				: ''} shadow-lg"
+				: ''} "
 		>
 			<span>{toast.message}</span>
-			<button class="btn btn-ghost btn-xs" on:click={() => toasts.remove(toast.id)}>✕</button>
+			<button
+				class="btn btn-ghost btn-xs"
+				onclick={() => toasts.remove(toast.id)}
+				aria-label="关闭通知">✕</button
+			>
 		</div>
 	{/each}
 </div>

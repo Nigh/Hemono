@@ -1,27 +1,30 @@
 <script lang="ts">
-	import { pb, currentUser } from '$lib/pb';
+	import { pb } from '$lib/pb';
 	import { toasts } from '$lib/toast';
-	import { createEventDispatcher, onMount } from 'svelte';
+	import { onMount } from 'svelte';
 
 	// Props
-	export let ledgerId: string;
-	export let ledgerName: string;
-	export let isOwner = false;
+	interface Props {
+		ledgerId: string;
+		ledgerName: string;
+		isOwner?: boolean;
+		onregister?: (ledgerId: string, methods: { open: () => void; resetState: () => void }) => void;
+	}
 
-	const dispatch = createEventDispatcher();
+	let { ledgerId, ledgerName, isOwner = false, onregister }: Props = $props();
 
 	// 状态管理
-	let isLoading = false;
-	let generatedCode = '';
-	let expiresAt = '';
-	let maxUses = 99;
-	let usedCount = 0;
-	let invitationId = '';
-	let dialogElement: HTMLDialogElement;
+	let isLoading = $state(false);
+	let generatedCode = $state('');
+	let expiresAt = $state('');
+	let maxUses = $state(99);
+	let usedCount = $state(0);
+	let invitationId = $state('');
+	let dialogElement: HTMLDialogElement | undefined = $state();
 
 	onMount(() => {
 		// 注册到父组件
-		dispatch('register', { ledgerId, methods: { open, resetState } });
+		onregister?.(ledgerId, { open, resetState });
 	});
 
 	// 仅执行关闭动作，不立即重置数据
@@ -218,6 +221,7 @@
 
 <dialog
 	id="generate_invite_{ledgerId}"
+	aria-labelledby="invite-title-{ledgerId}"
 	class="modal modal-bottom sm:modal-middle"
 	bind:this={dialogElement}
 	onclose={onDialogClose}
@@ -225,8 +229,10 @@
 >
 	<div class="modal-box border">
 		<div class="mb-4 flex items-center justify-between">
-			<h3 class="text-lg font-bold">邀请成员加入「{ledgerName}」</h3>
-			<button class="btn btn-ghost btn-sm" onclick={handleClose}>
+			<h2 id="invite-title-{ledgerId}" class="text-xl font-semibold">
+				邀请成员加入「{ledgerName}」
+			</h2>
+			<button class="btn btn-ghost btn-sm" onclick={handleClose} aria-label="关闭邀请弹窗">
 				<svg
 					xmlns="http://www.w3.org/2000/svg"
 					class="h-4 w-4"
@@ -266,7 +272,7 @@
 				</div>
 				<div class="space-y-1">
 					<h4 class="text-xl font-bold">权限不足</h4>
-					<p class="text-base-content/60">只有账本的所有者可以生成邀请码。</p>
+					<p class="text-text-muted">只有账本的所有者可以生成邀请码。</p>
 				</div>
 				<div class="pt-4">
 					<button class="btn btn-primary" onclick={handleClose}>返回</button>
@@ -289,11 +295,11 @@
 
 				<div class="bg-base-200 rounded-lg p-3">
 					<div class="text-sm mb-2 flex items-center justify-between">
-						<span class="text-base-content/60">有效期至：</span>
+						<span class="text-text-muted">有效期至：</span>
 						<span class="font-medium text-warning">{expiresAt}</span>
 					</div>
 					<div class="text-sm flex items-center justify-between">
-						<span class="text-base-content/60">已使用次数：</span>
+						<span class="text-text-muted">已使用次数：</span>
 						<span class="font-medium text-primary">{usedCount} / {maxUses} 次</span>
 					</div>
 				</div>
@@ -349,18 +355,18 @@
 			</div>
 		{:else}
 			<div class="space-y-4">
-				<p class="text-base-content/70">生成一个邀请码分享给朋友，他们可以使用此邀请码加入账本。</p>
+				<p class="text-text-muted">生成一个邀请码分享给朋友，他们可以使用此邀请码加入账本。</p>
 
 				<div class="bg-base-200 rounded-lg p-4">
 					<h4 class="font-semibold mb-2">邀请码设置：</h4>
 
 					<!-- 使用次数设置 -->
-					<div class="mb-3">
-						<label for="max-uses" class="label">
+					<div class="field mb-3">
+						<label for="max-uses-{ledgerId}" class="field-label">
 							<span class="label-text font-medium">最大使用次数 (1-99)</span>
 						</label>
 						<input
-							id="max-uses"
+							id="max-uses-{ledgerId}"
 							type="number"
 							min="1"
 							max="99"
@@ -373,7 +379,7 @@
 						/>
 					</div>
 
-					<ul class="text-sm text-base-content/60 space-y-1">
+					<ul class="text-sm text-text-muted space-y-1">
 						<li>• 邀请码有效期 24 小时</li>
 						<li>• 邀请码可使用 {maxUses} 次</li>
 						<li>• 邀请码格式：ABC-123456</li>

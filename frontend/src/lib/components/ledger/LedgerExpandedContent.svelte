@@ -82,13 +82,13 @@
 	/>
 
 	<a href="/ledger/{ledger.id}" class="flex items-center justify-between">
-		<span class="text-sm opacity-60">账本明细</span>
+		<span class="text-sm text-text-muted">账本明细</span>
 		<span class="btn btn-ghost btn-sm"> 查看 → </span>
 	</a>
 
 	<div class="flex items-center justify-between">
-		<span class="text-sm opacity-60">快速记账</span>
-		<button class="btn btn-primary btn-sm shadow-lg" onclick={onaddtransaction}>
+		<span class="text-sm text-text-muted">快速记账</span>
+		<button class="btn btn-primary btn-sm" onclick={onaddtransaction}>
 			<svg
 				xmlns="http://www.w3.org/2000/svg"
 				class="h-4 w-4"
@@ -105,7 +105,7 @@
 	{#if isOwner}
 		<!-- 成员列表 -->
 		<div class="space-y-2">
-			<span class="text-xs font-medium opacity-60">成员 ({members.length})</span>
+			<span class="text-xs font-medium text-text-muted">成员 ({members.length})</span>
 			<div class="gap-2 flex items-center">
 				<div class="avatar-group -space-x-4">
 					{#each members as member}

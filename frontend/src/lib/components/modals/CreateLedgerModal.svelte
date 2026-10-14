@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { createLedger } from '$lib/api/ledger';
 	import { currentUser } from '$lib/pb';
-	import { toasts } from '$lib/toast';
 	import OperationMessage from '$lib/components/OperationMessage.svelte';
 	import type { OperationMessageType } from '$lib/stores/operation-message';
 
@@ -75,15 +74,21 @@
 	}
 </script>
 
-<dialog id="create_ledger_modal" class="modal modal-bottom sm:modal-middle" onclose={onClose}>
+<dialog
+	id="create_ledger_modal"
+	aria-labelledby="create-title"
+	class="modal modal-bottom sm:modal-middle"
+	onclose={onClose}
+>
 	<div class="modal-box border">
-		<h3 class="text-lg font-bold mb-2">新建账本</h3>
+		<h2 id="create-title" class="mb-2 text-xl font-semibold">新建账本</h2>
 
 		{#if operationMessage}
 			<OperationMessage type={operationMessage.type} message={operationMessage.text} />
 		{/if}
 
-		<div class="py-4">
+		<label class="field py-4">
+			<span class="field-label">账本名称</span>
 			<input
 				type="text"
 				bind:value={newLedgerName}
@@ -91,9 +96,14 @@
 				class="input w-full"
 				disabled={isSuccess}
 			/>
-		</div>
+		</label>
 		<div class="modal-action">
-			<button class="btn btn-primary btn-block" onclick={handleCreateLedger} disabled={isSuccess}
+			<button
+				class="btn btn-ghost"
+				onclick={(event) => event.currentTarget.closest('dialog')?.close()}
+				disabled={isSuccess}>取消</button
+			>
+			<button class="btn btn-primary" onclick={handleCreateLedger} disabled={isSuccess}
 				>确认创建</button
 			>
 		</div>

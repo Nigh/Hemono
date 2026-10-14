@@ -46,6 +46,7 @@
 		"vitest": "^4.1.6"
 	},
 	"dependencies": {
+		"@xianii/design-system": "2.4.0",
 		"pocketbase": "^0.26.5"
 	}
 }
