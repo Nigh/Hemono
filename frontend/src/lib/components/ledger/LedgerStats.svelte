@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { pb } from '$lib/pb';
-	import type { MemberStat, LedgerStat } from '$lib/api/stats';
+	import type { LedgerStat } from '$lib/api/stats';
 
 	interface Props {
 		stats: LedgerStat | null;
@@ -19,7 +19,7 @@
 	function getBalanceClass(balance: number): string {
 		if (balance > 0) return 'text-success';
 		if (balance < 0) return 'text-error';
-		return 'text-gray-500';
+		return 'text-text-muted';
 	}
 
 	function getBalanceIcon(balance: number): string {
@@ -64,31 +64,33 @@
 {:else if stats}
 	<div class="gap-4 flex flex-col">
 		<!-- 统计摘要 -->
-		<div class="gap-4 sm:grid-cols-2 grid">
+		<div class="gap-3 grid grid-cols-2">
 			<div class="rounded-lg bg-base-200 p-4">
-				<div class="text-xs font-medium opacity-60">总支出</div>
+				<div class="text-xs font-medium text-text-muted">总支出</div>
 				<div class="text-xl font-bold text-error">¥{formatAmount(stats.totalExpense)}</div>
 			</div>
 			<div class="rounded-lg bg-base-200 p-4">
-				<div class="text-xs font-medium opacity-60">总收入</div>
+				<div class="text-xs font-medium text-text-muted">总收入</div>
 				<div class="text-xl font-bold text-success">¥{formatAmount(stats.totalIncome)}</div>
 			</div>
 			<div class="rounded-lg bg-base-200 p-4">
-				<div class="text-xs font-medium opacity-60">月支出</div>
+				<div class="text-xs font-medium text-text-muted">月支出</div>
 				<div class="text-xl font-bold text-error">¥{formatAmount(stats.monthlyExpense)}</div>
 			</div>
 			<div class="rounded-lg bg-base-200 p-4">
-				<div class="text-xs font-medium opacity-60">月收入</div>
+				<div class="text-xs font-medium text-text-muted">月收入</div>
 				<div class="text-xl font-bold text-success">¥{formatAmount(stats.monthlyIncome)}</div>
 			</div>
 		</div>
 
 		<!-- 成员结余列表 -->
 		<div class="rounded-lg bg-base-200 p-4">
-			<div class="mb-3 text-xs font-medium opacity-60">成员结余</div>
+			<div class="mb-3 text-xs font-medium text-text-muted">成员结余</div>
 			<div class="space-y-2">
 				{#each stats.memberStats as member}
-					<div class="gap-3 rounded-lg bg-base-100 p-3 flex items-center">
+					<div
+						class="gap-3 rounded-box bg-base-100 p-3 sm:grid-cols-[auto_minmax(0,1fr)_auto] grid grid-cols-[auto_minmax(0,1fr)] items-center"
+					>
 						<div class="avatar">
 							<div
 								class="w-10 h-10 rounded-full {member.userId === ownerId
@@ -124,16 +126,16 @@
 								</div>
 							{/if}
 						</div>
-						<div class="flex flex-1 flex-col">
-							<div class="font-medium">{member.name || member.email}</div>
-							<div class="text-xs opacity-60">
+						<div class="min-w-0 flex-1 flex-col">
+							<div class="font-medium break-words">{member.name || member.email}</div>
+							<div class="text-xs text-text-muted">
 								支出: ¥{formatAmount(member.totalExpense)}
 								{#if member.totalIncome > 0}
 									| 收入: ¥{formatAmount(member.totalIncome)}
 								{/if}
 							</div>
 						</div>
-						<div class="text-right">
+						<div class="sm:col-start-3 sm:row-start-1 sm:text-right col-start-2 tabular-nums">
 							<div class="font-bold {getBalanceClass(member.balance)}">
 								{#if member.balance > 0}
 									¥{formatAmount(member.balance)}

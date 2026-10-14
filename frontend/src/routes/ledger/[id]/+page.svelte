@@ -102,8 +102,8 @@
 	{:else if ledger}
 		<div class="card border-base-300 bg-base-100 border">
 			<div class="card-body p-4">
-				<h2 class="card-title text-lg">{ledger.name}</h2>
-				<p class="text-base-content/60 text-xs tracking-widest uppercase">{ledgerId}</p>
+				<h1 class="card-title text-2xl break-words">{ledger.name}</h1>
+				<p class="text-text-muted text-xs tracking-widest uppercase">{ledgerId}</p>
 			</div>
 		</div>
 
@@ -111,7 +111,7 @@
 			{#each transactions as tx (tx.id)}
 				<TransactionCard transaction={tx} ondelete={handleDelete} />
 			{:else}
-				<div class="text-center py-10 opacity-30">
+				<div class="text-center py-10 text-text-muted">
 					<p>暂无记账记录</p>
 				</div>
 			{/each}

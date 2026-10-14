@@ -99,58 +99,66 @@
 	}
 </script>
 
-<dialog id="add_modal" class="modal modal-bottom sm:modal-middle" onclose={onClose}>
+<dialog
+	id="add_modal"
+	aria-labelledby="add-title"
+	class="modal modal-bottom sm:modal-middle"
+	onclose={onClose}
+>
 	<div class="modal-box border">
-		<h3 class="text-lg font-bold mb-2">为「{ledgerName}」记一笔</h3>
+		<h2 id="add-title" class="mb-2 text-xl font-semibold">为「{ledgerName}」记一笔</h2>
 
 		{#if operationMessage}
 			<OperationMessage type={operationMessage.type} message={operationMessage.text} />
 		{/if}
 
 		<div class="space-y-4" class:mt-4={!operationMessage}>
-			<div class="tabs tabs-boxed bg-base-200">
+			<div class="choice-group" role="group" aria-label="收支方向">
 				<button
-					class="tab flex-1 {direction === 'EXPENSE' ? 'tab-active text-error' : ''}"
+					class="btn btn-sm"
+					aria-pressed={direction === 'EXPENSE'}
 					onclick={() => (direction = 'EXPENSE')}
 					disabled={isSuccess}>支出</button
 				>
 				<button
-					class="tab flex-1 {direction === 'INCOME' ? 'tab-active text-success' : ''}"
+					class="btn btn-sm"
+					aria-pressed={direction === 'INCOME'}
 					onclick={() => (direction = 'INCOME')}
 					disabled={isSuccess}>收入</button
 				>
 			</div>
 
-			<input
-				type="number"
-				bind:value={amount}
-				placeholder="金额"
-				class="input input-bordered w-full"
-				disabled={isSuccess}
-			/>
+			<label class="field">
+				<span class="field-label">金额（元）</span>
+				<input
+					type="number"
+					bind:value={amount}
+					placeholder="金额"
+					class="input input-bordered w-full"
+					disabled={isSuccess}
+				/>
+			</label>
 
-			<div class="tabs tabs-boxed bg-base-200">
+			<div class="choice-group" role="group" aria-label="分摊方式">
 				<button
-					class="tab flex-1 {splitType === 'AA' ? 'tab-active' : ''}"
+					class="btn btn-sm"
+					aria-pressed={splitType === 'AA'}
 					onclick={() => (splitType = 'AA')}
 					disabled={isSuccess}>AA 均摊</button
 				>
 				<button
-					class="tab flex-1 {splitType === 'SINGLE' ? 'tab-active' : ''}"
+					class="btn btn-sm"
+					aria-pressed={splitType === 'SINGLE'}
 					onclick={() => (splitType = 'SINGLE')}
 					disabled={isSuccess}>单人承担</button
 				>
 			</div>
 
 			{#if splitType === 'SINGLE'}
-				<div class="bg-base-200 border-primary/10 rounded-xl p-3 border">
-					<label class="label pt-0"
+				<div class="bg-base-200 border-primary/10 rounded-box p-3 border">
+					<label class="field"
 						><span class="label-text-alt font-bold">由谁承担？</span>
-						<select
-							class="select select-sm select-ghost w-full"
-							bind:value={beneficiary}
-							disabled={isSuccess}
-						>
+						<select class="select w-full" bind:value={beneficiary} disabled={isSuccess}>
 							{#each members as m}
 								<option value={m.id}
 									>{m.id === $currentUser?.id ? '[自己]' : ''} {m.name || m.email} ({m.email})
@@ -161,19 +169,25 @@
 				</div>
 			{/if}
 
-			<input
-				type="text"
-				bind:value={note}
-				placeholder="写点备注..."
-				class="input input-bordered w-full"
-				disabled={isSuccess}
-			/>
+			<label class="field">
+				<span class="field-label">备注（选填）</span>
+				<input
+					type="text"
+					bind:value={note}
+					placeholder="写点备注..."
+					class="input input-bordered w-full"
+					disabled={isSuccess}
+				/>
+			</label>
 		</div>
 		<div class="modal-action">
 			<button
-				class="btn btn-primary btn-block shadow-lg"
-				onclick={handleAddTransaction}
-				disabled={isSuccess}>记一笔</button
+				class="btn btn-ghost"
+				onclick={(event) => event.currentTarget.closest('dialog')?.close()}
+				disabled={isSuccess}>取消</button
+			>
+			<button class="btn btn-primary" onclick={handleAddTransaction} disabled={isSuccess}
+				>记一笔</button
 			>
 		</div>
 	</div>

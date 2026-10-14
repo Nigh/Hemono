@@ -16,8 +16,10 @@
 	let statsRefreshCounter = $state(0);
 	let inviteModals: Map<string, { open: () => void; resetState: () => void }> = new Map();
 
-	function handleRegisterInviteModal(e: CustomEvent) {
-		const { ledgerId, methods } = e.detail;
+	function handleRegisterInviteModal(
+		ledgerId: string,
+		methods: { open: () => void; resetState: () => void }
+	) {
 		inviteModals.set(ledgerId, methods);
 	}
 
@@ -85,12 +87,20 @@
 </script>
 
 <div class="space-y-4">
+	<div class="mb-6 gap-4 flex items-center justify-between">
+		<div>
+			<h1 class="text-2xl font-bold">我的账本</h1>
+			<p class="text-text-muted mt-2 text-sm">共同的开销，清楚的记录。</p>
+		</div>
+		<button class="btn btn-primary btn-sm shrink-0" onclick={openCreateLedgerModal}>新建账本</button
+		>
+	</div>
 	<div class="gap-3 grid">
 		{#each ledgers as ledger}
 			<div
-				class="card border transition-all duration-300 select-none {expandedLedger === ledger.id
-					? 'border-primary ring-primary ring-2'
-					: 'border-base hover:ring-2'}"
+				class="card bg-base-100 border transition-colors duration-200 {expandedLedger === ledger.id
+					? 'border-primary'
+					: 'border-base-300 hover:border-primary/50'}"
 			>
 				<LedgerCard
 					{ledger}
@@ -110,25 +120,10 @@
 				{/if}
 			</div>
 		{:else}
-			<div class="text-center py-20 opacity-30">
+			<div class="card bg-base-100 border-base-300 border py-16 text-center text-text-muted">
 				<p>还没有账本，点击创建一个</p>
 			</div>
 		{/each}
-		<button class="btn btn-sm btn-ghost" onclick={openCreateLedgerModal} title="新建账本">
-			<svg
-				xmlns="http://www.w3.org/2000/svg"
-				class="h-4 w-4"
-				fill="none"
-				viewBox="0 0 24 24"
-				stroke="currentColor"
-				><path
-					stroke-linecap="round"
-					stroke-linejoin="round"
-					stroke-width="3"
-					d="M12 4v16m8-8H4"
-				/></svg
-			>
-		</button>
 	</div>
 </div>
 
@@ -146,6 +141,6 @@
 		ledgerId={ledger.id}
 		ledgerName={ledger.name}
 		isOwner={$currentUser?.id === ledger.owner}
-		on:register={handleRegisterInviteModal}
+		onregister={handleRegisterInviteModal}
 	/>
 {/each}

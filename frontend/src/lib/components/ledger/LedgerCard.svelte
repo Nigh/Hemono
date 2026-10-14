@@ -12,12 +12,13 @@
 </script>
 
 <button
-	class="card-body p-4 w-full flex-row items-center justify-between text-left"
+	class="card-body gap-4 rounded-box p-5 hover:bg-interactive-hover w-full flex-row items-center justify-between text-left"
 	onclick={ontoggle}
+	aria-expanded={isExpanded}
 >
-	<div>
-		<h3 class="font-bold text-xl">{ledger.name}</h3>
-		<p class="tracking-widest text-xs uppercase opacity-40">{ledger.id}</p>
+	<div class="min-w-0">
+		<h2 class="text-xl font-semibold break-words">{ledger.name}</h2>
+		<p class="mt-1 font-mono text-xs text-text-muted">{ledger.id}</p>
 	</div>
 	<div class="gap-2 flex items-center">
 		<svg
